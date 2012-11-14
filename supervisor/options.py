@@ -49,7 +49,7 @@ from supervisor.datatypes import set_here
 
 from supervisor import loggers
 from supervisor import states
-from supervisor import xmlrpc
+from supervisor import xmlrpc_lib
 
 mydir = os.path.abspath(os.path.dirname(__file__))
 version_txt = os.path.join(mydir, 'version.txt')
@@ -1509,7 +1509,7 @@ class ClientOptions(Options):
             # so we fake the url we pass into it and always use the transport's
             # 'serverurl' to figure out what to attach to
             'http://127.0.0.1',
-            transport = xmlrpc.SupervisorTransport(self.username,
+            transport = xmlrpc_lib.SupervisorTransport(self.username,
                                                    self.password,
                                                    self.serverurl)
             )

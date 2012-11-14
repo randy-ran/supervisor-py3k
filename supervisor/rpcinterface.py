@@ -16,8 +16,8 @@ from supervisor.events import notify
 from supervisor.events import RemoteCommunicationEvent
 
 from supervisor.http_lib import NOT_DONE_YET
-from supervisor.xmlrpc import Faults
-from supervisor.xmlrpc import RPCError
+from supervisor.xmlrpc_lib import Faults
+from supervisor.xmlrpc_lib import RPCError
 
 from supervisor.states import SupervisorStates
 from supervisor.states import getSupervisorStateDescription

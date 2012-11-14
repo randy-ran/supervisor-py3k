@@ -793,8 +793,8 @@ def make_http_servers(options, supervisord):
         else:
             raise ValueError('Cannot determine socket type %r' % family)
 
-        from xmlrpc import supervisor_xmlrpc_handler
-        from xmlrpc import SystemNamespaceRPCInterface
+        from supervisor.xmlrpc_lib import supervisor_xmlrpc_handler
+        from supervisor.xmlrpc_lib import SystemNamespaceRPCInterface
         from web import supervisor_ui_handler
 
         subinterfaces = []

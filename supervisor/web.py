@@ -20,10 +20,10 @@ from supervisor.http_lib import NOT_DONE_YET
 from supervisor.options import make_namespec
 from supervisor.options import split_namespec
 
-from supervisor.xmlrpc import SystemNamespaceRPCInterface
-from supervisor.xmlrpc import RootRPCInterface
-from supervisor.xmlrpc import Faults
-from supervisor.xmlrpc import RPCError
+from supervisor.xmlrpc_lib import SystemNamespaceRPCInterface
+from supervisor.xmlrpc_lib import RootRPCInterface
+from supervisor.xmlrpc_lib import Faults
+from supervisor.xmlrpc_lib import RPCError
 
 from supervisor.rpcinterface import SupervisorNamespaceRPCInterface
 

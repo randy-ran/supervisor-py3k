@@ -8,16 +8,16 @@ from supervisor.tests.base import DummySupervisorRPCNamespace
 class XMLRPCMarshallingTests(unittest.TestCase):
     def test_xmlrpc_marshal(self):
         import xmlrpclib
-        from supervisor import xmlrpc
-        data = xmlrpc.xmlrpc_marshal(1)
+        from supervisor import xmlrpc_lib
+        data = xmlrpc_lib.xmlrpc_marshal(1)
         self.assertEqual(data, xmlrpclib.dumps((1,), methodresponse=True))
         fault = xmlrpclib.Fault(1, 'foo')
-        data = xmlrpc.xmlrpc_marshal(fault)
+        data = xmlrpc_lib.xmlrpc_marshal(fault)
         self.assertEqual(data, xmlrpclib.dumps(fault))
 
 class XMLRPCHandlerTests(unittest.TestCase):
     def _getTargetClass(self):
-        from supervisor.xmlrpc import supervisor_xmlrpc_handler
+        from supervisor.xmlrpc_lib import supervisor_xmlrpc_handler
         return supervisor_xmlrpc_handler
     
     def _makeOne(self, supervisord, subinterfaces):
@@ -28,7 +28,7 @@ class XMLRPCHandlerTests(unittest.TestCase):
         subinterfaces = [('supervisor', DummySupervisorRPCNamespace())]
         handler = self._makeOne(supervisor, subinterfaces)
         self.assertEqual(handler.supervisord, supervisor)
-        from supervisor.xmlrpc import RootRPCInterface
+        from supervisor.xmlrpc_lib import RootRPCInterface
         self.assertEqual(handler.rpcinterface.__class__, RootRPCInterface)
 
     def test_match(self):
@@ -50,7 +50,7 @@ class XMLRPCHandlerTests(unittest.TestCase):
         request = DummyRequest('/what/ever', None, None, None)
         handler.continue_request(data, request)
         logdata = supervisor.options.logger.data
-        from supervisor.xmlrpc import loads
+        from supervisor.xmlrpc_lib import loads
         if loads:
             expected = 2
         else:
@@ -74,7 +74,7 @@ class XMLRPCHandlerTests(unittest.TestCase):
         request = DummyRequest('/what/ever', None, None, None)
         handler.continue_request(data, request)
         logdata = supervisor.options.logger.data
-        from supervisor.xmlrpc import loads
+        from supervisor.xmlrpc_lib import loads
         if loads:
             expected = 2
         else:
@@ -104,7 +104,7 @@ class XMLRPCHandlerTests(unittest.TestCase):
         request = DummyRequest('/what/ever', None, None, None)
         handler.continue_request(data, request)
         logdata = supervisor.options.logger.data
-        from supervisor.xmlrpc import loads
+        from supervisor.xmlrpc_lib import loads
         if loads:
             expected = 2
         else:
@@ -133,7 +133,7 @@ class XMLRPCHandlerTests(unittest.TestCase):
         request = DummyRequest('/what/ever', None, None, None)
         handler.continue_request(data, request)
         logdata = supervisor.options.logger.data
-        from supervisor.xmlrpc import loads
+        from supervisor.xmlrpc_lib import loads
         if loads:
             expected = 1
         else:
@@ -153,7 +153,7 @@ class XMLRPCHandlerTests(unittest.TestCase):
         request = DummyRequest('/what/ever', None, None, None)
         handler.continue_request(data, request)
         logdata = supervisor.options.logger.data
-        from supervisor.xmlrpc import loads
+        from supervisor.xmlrpc_lib import loads
         if loads:
             expected = 2
         else:
@@ -168,41 +168,41 @@ class XMLRPCHandlerTests(unittest.TestCase):
 
 class TraverseTests(unittest.TestCase):
     def test_underscore(self):
-        from supervisor import xmlrpc
-        self.assertRaises(xmlrpc.RPCError, xmlrpc.traverse, None, '_', None)
+        from supervisor import xmlrpc_lib
+        self.assertRaises(xmlrpc_lib.RPCError, xmlrpc_lib.traverse, None, '_', None)
 
     def test_notfound(self):
-        from supervisor import xmlrpc
-        self.assertRaises(xmlrpc.RPCError, xmlrpc.traverse, None, 'foo', None)
+        from supervisor import xmlrpc_lib
+        self.assertRaises(xmlrpc_lib.RPCError, xmlrpc_lib.traverse, None, 'foo', None)
 
     def test_badparams(self):
-        from supervisor import xmlrpc
-        self.assertRaises(xmlrpc.RPCError, xmlrpc.traverse, self,
+        from supervisor import xmlrpc_lib
+        self.assertRaises(xmlrpc_lib.RPCError, xmlrpc_lib.traverse, self,
                           'test_badparams', (1, 2, 3))
 
     def test_success(self):
-        from supervisor import xmlrpc
+        from supervisor import xmlrpc_lib
         L = []
         class Dummy:
             def foo(self, a):
                 L.append(a)
         dummy = Dummy()
-        xmlrpc.traverse(dummy, 'foo', [1])
+        xmlrpc_lib.traverse(dummy, 'foo', [1])
         self.assertEqual(L, [1])
 
 class SupervisorTransportTests(unittest.TestCase):
     def _getTargetClass(self):
-        from supervisor.xmlrpc import SupervisorTransport
+        from supervisor.xmlrpc_lib import SupervisorTransport
         return SupervisorTransport
 
     def _makeOne(self, *arg, **kw):
         return self._getTargetClass()(*arg, **kw)
 
     def test_ctor_unix(self):
-        from supervisor import xmlrpc
+        from supervisor import xmlrpc_lib
         transport = self._makeOne('user', 'pass', 'unix:///foo/bar')
         conn = transport._get_connection()
-        self.failUnless(isinstance(conn, xmlrpc.UnixStreamHTTPConnection))
+        self.failUnless(isinstance(conn, xmlrpc_lib.UnixStreamHTTPConnection))
         self.assertEqual(conn.host, 'localhost')
         self.assertEqual(conn.socketfile, '/foo/bar')
 
@@ -333,7 +333,7 @@ class IterparseLoadsTests(unittest.TestCase):
         </params>
         </methodCall>
         """
-        from supervisor.xmlrpc import loads
+        from supervisor.xmlrpc_lib import loads
         if loads is None:
             return # no cElementTree
         result = loads(s)

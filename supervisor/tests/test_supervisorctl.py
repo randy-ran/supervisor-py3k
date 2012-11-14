@@ -38,7 +38,7 @@ class ControllerTests(unittest.TestCase):
     def test__upcheck_unknown_method(self):
         options = DummyClientOptions()
         from xmlrpclib import Fault
-        from supervisor.xmlrpc import Faults
+        from supervisor.xmlrpc_lib import Faults
         def getVersion():
             raise Fault(Faults.UNKNOWN_METHOD, 'duh')
         options._server.supervisor.getVersion = getVersion
@@ -539,11 +539,11 @@ class TestDefaultControllerPlugin(unittest.TestCase):
         
     def test_shutdown_catches_xmlrpc_fault_shutdown_state(self):
         plugin = self._makeOne()
-        from supervisor import xmlrpc
+        from supervisor import xmlrpc_lib
         import xmlrpclib
         
         def raise_fault(*arg, **kw):     
-            raise xmlrpclib.Fault(xmlrpc.Faults.SHUTDOWN_STATE, 'bye')
+            raise xmlrpclib.Fault(xmlrpc_lib.Faults.SHUTDOWN_STATE, 'bye')
         plugin.ctl.options._server.supervisor.shutdown = raise_fault
 
         result = plugin.do_shutdown('')
@@ -553,11 +553,11 @@ class TestDefaultControllerPlugin(unittest.TestCase):
 
     def test_shutdown_reraises_other_xmlrpc_faults(self):
         plugin = self._makeOne()
-        from supervisor import xmlrpc
+        from supervisor import xmlrpc_lib
         import xmlrpclib
         
         def raise_fault(*arg, **kw):     
-            raise xmlrpclib.Fault(xmlrpc.Faults.CANT_REREAD, 'ouch')
+            raise xmlrpclib.Fault(xmlrpc_lib.Faults.CANT_REREAD, 'ouch')
         plugin.ctl.options._server.supervisor.shutdown = raise_fault
 
         self.assertRaises(xmlrpclib.Fault, 
@@ -621,10 +621,10 @@ class TestDefaultControllerPlugin(unittest.TestCase):
 
     def test_reread_Fault(self):
         plugin = self._makeOne()
-        from supervisor import xmlrpc
+        from supervisor import xmlrpc_lib
         import xmlrpclib
         def raise_fault(*arg, **kw):
-            raise xmlrpclib.Fault(xmlrpc.Faults.CANT_REREAD, 'cant')
+            raise xmlrpclib.Fault(xmlrpc_lib.Faults.CANT_REREAD, 'cant')
         plugin.ctl.options._server.supervisor.reloadConfig = raise_fault
         plugin.do_reread(None)
         self.assertEqual(plugin.ctl.stdout.getvalue(),
@@ -717,9 +717,9 @@ class TestDefaultControllerPlugin(unittest.TestCase):
         plugin = self._makeOne()
         supervisor = plugin.ctl.options._server.supervisor
         def reloadConfig():
-            from supervisor import xmlrpc
+            from supervisor import xmlrpc_lib
             import xmlrpclib
-            raise xmlrpclib.Fault(xmlrpc.Faults.SHUTDOWN_STATE, 'blah')
+            raise xmlrpclib.Fault(xmlrpc_lib.Faults.SHUTDOWN_STATE, 'blah')
         supervisor.reloadConfig = reloadConfig
         supervisor.processes = ['removed']
         plugin.do_update('')
@@ -738,7 +738,7 @@ class TestDefaultControllerPlugin(unittest.TestCase):
         self.assertEqual(supervisor.processes, ['new_proc'])
 
     def test_update_changed_procs(self):
-        from supervisor import xmlrpc
+        from supervisor import xmlrpc_lib
         import xmlrpclib
 
         plugin = self._makeOne()
@@ -753,7 +753,7 @@ class TestDefaultControllerPlugin(unittest.TestCase):
         supervisor.addProcessGroup('changed_group') # fake existence
         results = [{'name':        'changed_process',
                     'group':       'changed_group',
-                    'status':      xmlrpc.Faults.SUCCESS,
+                    'status':      xmlrpc_lib.Faults.SUCCESS,
                     'description': 'blah'}]
         def stopProcessGroup(name):
             calls.append(('stop', name))
@@ -767,11 +767,11 @@ class TestDefaultControllerPlugin(unittest.TestCase):
         calls[:] = []
         results[:] = [{'name':        'changed_process1',
                        'group':       'changed_group',
-                       'status':      xmlrpc.Faults.NOT_RUNNING,
+                       'status':      xmlrpc_lib.Faults.NOT_RUNNING,
                        'description': 'blah'},
                       {'name':        'changed_process2',
                        'group':       'changed_group',
-                       'status':      xmlrpc.Faults.FAILED,
+                       'status':      xmlrpc_lib.Faults.FAILED,
                        'description': 'blah'}]
 
         plugin.do_update('')
@@ -781,18 +781,18 @@ class TestDefaultControllerPlugin(unittest.TestCase):
         calls[:] = []
         results[:] = [{'name':        'changed_process1',
                        'group':       'changed_group',
-                       'status':      xmlrpc.Faults.FAILED,
+                       'status':      xmlrpc_lib.Faults.FAILED,
                        'description': 'blah'},
                       {'name':        'changed_process2',
                        'group':       'changed_group',
-                       'status':      xmlrpc.Faults.SUCCESS,
+                       'status':      xmlrpc_lib.Faults.SUCCESS,
                        'description': 'blah'}]
 
         plugin.do_update('')
         self.assertEqual(calls, [('stop', 'changed_group')])
 
     def test_update_removed_procs(self):
-        from supervisor import xmlrpc
+        from supervisor import xmlrpc_lib
 
         plugin = self._makeOne()
         supervisor = plugin.ctl.options._server.supervisor
@@ -803,7 +803,7 @@ class TestDefaultControllerPlugin(unittest.TestCase):
 
         results = [{'name':        'removed_process',
                     'group':       'removed_group',
-                    'status':      xmlrpc.Faults.SUCCESS,
+                    'status':      xmlrpc_lib.Faults.SUCCESS,
                     'description': 'blah'}]
         supervisor.processes = ['removed_group']
 
@@ -816,7 +816,7 @@ class TestDefaultControllerPlugin(unittest.TestCase):
 
         results[:] = [{'name':        'removed_process',
                        'group':       'removed_group',
-                       'status':      xmlrpc.Faults.NOT_RUNNING,
+                       'status':      xmlrpc_lib.Faults.NOT_RUNNING,
                        'description': 'blah'}]
         supervisor.processes = ['removed_group']
 
@@ -825,7 +825,7 @@ class TestDefaultControllerPlugin(unittest.TestCase):
 
         results[:] = [{'name':        'removed_process',
                        'group':       'removed_group',
-                       'status':      xmlrpc.Faults.FAILED,
+                       'status':      xmlrpc_lib.Faults.FAILED,
                        'description': 'blah'}]
         supervisor.processes = ['removed_group']
 
@@ -905,8 +905,8 @@ class TestDefaultControllerPlugin(unittest.TestCase):
     def test_maintail_readlog_error_nofile(self):
         plugin = self._makeOne()
         supervisor_rpc = plugin.ctl.get_supervisor()
-        from supervisor import xmlrpc
-        supervisor_rpc._readlog_error = xmlrpc.Faults.NO_FILE
+        from supervisor import xmlrpc_lib
+        supervisor_rpc._readlog_error = xmlrpc_lib.Faults.NO_FILE
         result = plugin.do_maintail('-100')
         self.assertEqual(plugin.ctl.stdout.getvalue(),
                          'supervisord: ERROR (no log file)\n')
@@ -914,8 +914,8 @@ class TestDefaultControllerPlugin(unittest.TestCase):
     def test_maintail_readlog_error_failed(self):
         plugin = self._makeOne()
         supervisor_rpc = plugin.ctl.get_supervisor()
-        from supervisor import xmlrpc
-        supervisor_rpc._readlog_error = xmlrpc.Faults.FAILED
+        from supervisor import xmlrpc_lib
+        supervisor_rpc._readlog_error = xmlrpc_lib.Faults.FAILED
         result = plugin.do_maintail('-100')
         self.assertEqual(plugin.ctl.stdout.getvalue(),
                          'supervisord: ERROR (unknown error reading log)\n')

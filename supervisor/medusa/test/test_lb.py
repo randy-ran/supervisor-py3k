@@ -56,7 +56,7 @@ class test_server (asyncore.dispatcher):
         self.create_socket (f, socket.SOCK_STREAM)
         self.bind (addr)
         self.listen (5)
-        print 'server started on',addr
+        print(('server started on',addr))
 
     def handle_accept (self):
         conn, addr = self.accept()
@@ -116,9 +116,9 @@ if __name__ == '__main__':
         use_poll=0
 
     if len(sys.argv) == 1:
-        print 'usage: %s\n' \
+        print(('usage: %s\n' \
         '  (as a server) [--poll] -s <ip> <port>\n' \
-        '  (as a client) [--poll] -c <ip> <port> <packet-size> <num-packets> <num-connections>\n' % sys.argv[0]
+        '  (as a client) [--poll] -c <ip> <port> <packet-size> <num-packets> <num-connections>\n' % sys.argv[0]))
         sys.exit(0)
     if sys.argv[1] == '-s':
         s = test_server ((sys.argv[2], string.atoi (sys.argv[3])))
@@ -153,7 +153,7 @@ if __name__ == '__main__':
 
         sys.stdout.write (
                 string.join (
-                        map (str, (num_conns, num_packets, len(packet), throughput, trans_per_sec)),
+                        list(map (str, (num_conns, num_packets, len(packet), throughput, trans_per_sec))),
                         ','
                         ) + '\n'
                 )

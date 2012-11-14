@@ -8,14 +8,14 @@
 import socket
 import string
 import sys
-import thread
+from . import thread
 import md5
 
 def hex_digest (s):
     m = md5.md5()
     m.update (s)
     return string.join (
-            map (lambda x: hex (ord (x))[2:], map (None, m.digest())),
+            [hex (ord (x))[2:] for x in list(m.digest())],
             '',
             )
 
@@ -27,7 +27,7 @@ def reader (lock, sock, password):
         d = sock.recv (1024)
         if not d:
             lock.release()
-            print 'Connection closed.  Hit <return> to exit'
+            print('Connection closed.  Hit <return> to exit')
             thread.exit()
         sys.stdout.write (d)
         sys.stdout.flush()
@@ -40,10 +40,10 @@ def writer (lock, sock, barrel="just kidding"):
 
 if __name__ == '__main__':
     if len(sys.argv) == 1:
-        print 'Usage: %s host port'
+        print('Usage: %s host port')
         sys.exit(0)
-    print 'Enter Password: ',
-    p = raw_input()
+    print('Enter Password: ', end=' ')
+    p = input()
     s = socket.socket (socket.AF_INET, socket.SOCK_STREAM)
     s.connect ((sys.argv[1], string.atoi(sys.argv[2])))
     l = thread.allocate_lock()

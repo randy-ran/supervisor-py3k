@@ -6,7 +6,7 @@ import signal
 import sys
 import socket
 import shlex
-import urlparse
+import urllib.parse
 from supervisor.loggers import getLevelNumByDescription
 
 # I dont know why we bother, this doesn't run on Windows, but just
@@ -26,9 +26,9 @@ def integer(value):
     try:
         return int(value)
     except ValueError:
-        return long(value) # why does this help? (CM)
+        return int(value) # why does this help? (CM)
     except OverflowError:
-        return long(value)
+        return int(value)
 
 TRUTHY_STRINGS = ('yes', 'true', 'on', '1')
 FALSY_STRINGS  = ('no', 'false', 'off', '0')
@@ -56,7 +56,7 @@ def list_of_ints(arg):
         return []
     else:
         try:
-            return map(int, arg.split(","))
+            return list(map(int, arg.split(",")))
         except:
             raise ValueError("not a valid list of ints: " + repr(arg))
 
@@ -85,7 +85,7 @@ def dict_of_key_value_pairs(arg):
     while i < tokens_len:
         k_eq_v = tokens[i:i+3]
         if len(k_eq_v) != 3 or k_eq_v[1] != '=':
-            raise ValueError, "Unexpected end of key/value pairs"
+            raise ValueError("Unexpected end of key/value pairs")
         D[k_eq_v[0]] = k_eq_v[2].strip('\'"')
         i += 4
     return D
@@ -121,10 +121,10 @@ class RangeCheckedConversion:
         v = self._conversion(value)
         if self._min is not None and v < self._min:
             raise ValueError("%s is below lower bound (%s)"
-                             % (`v`, `self._min`))
+                             % (repr(v), repr(self._min)))
         if self._max is not None and v > self._max:
             raise ValueError("%s is above upper bound (%s)"
-                             % (`v`, `self._max`))
+                             % (repr(v), repr(self._max)))
         return v
 
 port_number = RangeCheckedConversion(integer, min=1, max=0xffff).__call__
@@ -251,7 +251,7 @@ class UnixStreamSocketConfig(SocketConfig):
         if self.mode is not None:
             try:
                 os.chmod(self.path, self.mode)
-            except Exception, e:
+            except Exception as e:
                 raise ValueError("Could not change permissions of socket "
                                     + "file: %s" % (e))
 
@@ -259,7 +259,7 @@ class UnixStreamSocketConfig(SocketConfig):
         if self.owner is not None:
             try:
                 os.chown(self.path, self.owner[0], self.owner[1])
-            except Exception, e:
+            except Exception as e:
                 raise ValueError("Could not change ownership of socket file: "
                                     + "%s" % (e))
 
@@ -285,7 +285,7 @@ def colon_separated_user_group(arg):
             return (uid, gid)
         return result
     except:
-        raise ValueError, 'Invalid user.group definition %s' % arg
+        raise ValueError('Invalid user.group definition %s' % arg)
 
 def octal_type(arg):
     try:
@@ -348,7 +348,7 @@ def existing_dirpath(v):
         return nv
     if os.path.isdir(dir):
         return nv
-    raise ValueError, ('The directory named as part of the path %s '
+    raise ValueError('The directory named as part of the path %s '
                        'does not exist.' % v)
 
 def logging_level(value):
@@ -367,7 +367,7 @@ class SuffixMultiplier:
         self._default = default
         # all keys must be the same size
         self._keysz = None
-        for k in d.keys():
+        for k in list(d.keys()):
             if self._keysz is None:
                 self._keysz = len(k)
             else:
@@ -375,20 +375,20 @@ class SuffixMultiplier:
 
     def __call__(self, v):
         v = v.lower()
-        for s, m in self._d.items():
+        for s, m in list(self._d.items()):
             if v[-self._keysz:] == s:
                 return int(v[:-self._keysz]) * m
         return int(v) * self._default
 
 byte_size = SuffixMultiplier({'kb': 1024,
                               'mb': 1024*1024,
-                              'gb': 1024*1024*1024L,})
+                              'gb': 1024*1024*1024,})
 
 def url(value):
     # earlier Python 2.6 urlparse (2.6.4 and under) can't parse unix:// URLs,
     # later ones can but we need to straddle
     uri = value.replace('unix://', 'http://', 1).strip()
-    scheme, netloc, path, params, query, fragment = urlparse.urlparse(uri)
+    scheme, netloc, path, params, query, fragment = urllib.parse.urlparse(uri)
     if scheme and (netloc or path):
         return value
     raise ValueError("value %s is not a URL" % value)

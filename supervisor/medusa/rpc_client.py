@@ -40,7 +40,7 @@ import sys
 # again in the near future.
 #
 
-class RPC_Error (exceptions.StandardError):
+class RPC_Error (exceptions.Exception):
     pass
 
 # ===========================================================================
@@ -94,7 +94,7 @@ class rpc_proxy:
         except:
             import who_calls
             info = who_calls.compact_traceback()
-            print info
+            print(info)
 
     def __remote_repr__ (self):
         r = self.__send_request__ (3, None)
@@ -117,14 +117,14 @@ class rpc_proxy:
     def __send_request__ (self, *args):
         if self.DEBUG:
             kind = args[0]
-            print (
+            print((
                     'RPC: ==> %s:%08x:%s:%s' % (
                             self.conn.address,
                             self.oid,
                             self._request_types_[kind],
                             repr(args[1:])
                             )
-                    )
+                    ))
         packet = marshal.dumps ((self.oid,)+args)
         # send request
         self.conn.send_packet (packet)
@@ -140,13 +140,13 @@ class rpc_proxy:
         if kind == 0:
             # proxy (value == oid)
             if self.DEBUG:
-                print 'RPC: <== proxy(%08x)' % (value)
+                print(('RPC: <== proxy(%08x)' % (value)))
             return rpc_proxy (self.conn, value)
         elif kind == 1:
-            raise RPC_Error, value
+            raise RPC_Error(value)
         else:
             if self.DEBUG:
-                print 'RPC: <== %s' % (repr(value))
+                print(('RPC: <== %s' % (repr(value))))
             return value
 
 class rpc_connection:
@@ -175,7 +175,7 @@ class rpc_connection:
         self.socket.send ('%08x%s' % (len(packet), packet))
 
 def rpc_connect (address = ('localhost', 8746)):
-    if not rpc_connection.cache.has_key (address):
+    if address not in rpc_connection.cache:
         conn = rpc_connection (address)
         # get oid of remote object
         data = conn.receive_packet()
@@ -209,13 +209,13 @@ class fastrpc_proxy:
         if error is None:
             return result
         else:
-            raise RPC_Error, error
+            raise RPC_Error(error)
 
     def __repr__ (self):
         return '<remote-method-%s at %x>' % (string.join (self.path, '.'), id (self))
 
 def fastrpc_connect (address = ('localhost', 8748)):
-    if not rpc_connection.cache.has_key (address):
+    if address not in rpc_connection.cache:
         conn = rpc_connection (address)
         rpc_connection.cache[address] = fastrpc_proxy (conn)
     return rpc_connection.cache[address]
@@ -224,7 +224,7 @@ def fastrpc_connect (address = ('localhost', 8748)):
 #                                                async fastrpc client
 # ===========================================================================
 
-import asynchat_25 as asynchat
+from . import asynchat_25 as asynchat
 
 class async_fastrpc_client (asynchat.async_chat):
 
@@ -304,9 +304,9 @@ if __name__ == '__main__':
     else:
         connect = rpc_connect
 
-    print 'connecting...'
+    print('connecting...')
     c = connect()
-    print 'calling <remote>.calc.sum (1,2,3)'
-    print c.calc.sum (1,2,3)
-    print 'calling <remote>.calc.nonexistent(), expect an exception!'
-    print c.calc.nonexistent()
+    print('calling <remote>.calc.sum (1,2,3)')
+    print((c.calc.sum (1,2,3)))
+    print('calling <remote>.calc.nonexistent(), expect an exception!')
+    print((c.calc.nonexistent()))

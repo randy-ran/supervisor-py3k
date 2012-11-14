@@ -15,11 +15,11 @@ import time
 
 VERSION = string.split(RCS_ID)[2]
 
-import asyncore_25 as asyncore
-import asynchat_25 as asynchat
+from . import asyncore_25 as asyncore
+from . import asynchat_25 as asynchat
 
-from counter import counter
-import producers
+from .counter import counter
+from . import producers
 
 class monitor_channel (asynchat.async_chat):
     try_linemode = 1
@@ -93,7 +93,7 @@ class monitor_channel (asynchat.async_chat):
                     result = eval (co, self.local_env)
                     method = 'eval'
                     if result is not None:
-                        print repr(result)
+                        print(repr(result))
                     self.local_env['_'] = result
                 except SyntaxError:
                     try:
@@ -109,7 +109,7 @@ class monitor_channel (asynchat.async_chat):
                                 self.multi_line = []
                         else:
                             co = compile (line, repr(self), 'exec')
-                    except SyntaxError, why:
+                    except SyntaxError as why:
                         if why[0] == 'unexpected EOF while parsing':
                             self.push ('... ')
                             self.multi_line.append (line)
@@ -117,8 +117,8 @@ class monitor_channel (asynchat.async_chat):
                         else:
                             t,v,tb = sys.exc_info()
                             del tb
-                            raise t,v
-                    exec co in self.local_env
+                            raise t(v)
+                    exec(co, self.local_env)
                     method = 'exec'
             except:
                 method = 'exception'
@@ -195,7 +195,7 @@ def hex_digest (s):
     m = md5.md5()
     m.update (s)
     return string.joinfields (
-            map (lambda x: hex (ord (x))[2:], map (None, m.digest())),
+            [hex (ord (x))[2:] for x in list(m.digest())],
             '',
             )
 
@@ -318,8 +318,8 @@ class output_producer:
 if __name__ == '__main__':
     if '-s' in sys.argv:
         sys.argv.remove ('-s')
-        print 'Enter password: ',
-        password = raw_input()
+        print('Enter password: ', end=' ')
+        password = input()
     else:
         password = None
 

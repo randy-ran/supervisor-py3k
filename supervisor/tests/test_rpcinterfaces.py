@@ -25,7 +25,7 @@ class TestBase(unittest.TestCase):
         from supervisor import xmlrpc_lib
         try:
             callable(*args, **kw)
-        except xmlrpc_lib.RPCError, inst:
+        except xmlrpc_lib.RPCError as inst:
             self.assertEqual(inst.code, code)
         else:
             raise AssertionError("Didnt raise")
@@ -255,15 +255,15 @@ class SupervisorNamespaceXMLRPCInterfaceTests(TestBase):
 
         result = interface.addProcessGroup('group1')
         self.assertTrue(result)
-        self.assertEqual(supervisord.process_groups.keys(), ['group1'])
+        self.assertEqual(list(supervisord.process_groups.keys()), ['group1'])
 
         self._assertRPCError(xmlrpc_lib.Faults.ALREADY_ADDED,
                              interface.addProcessGroup, 'group1')
-        self.assertEqual(supervisord.process_groups.keys(), ['group1'])
+        self.assertEqual(list(supervisord.process_groups.keys()), ['group1'])
 
         self._assertRPCError(xmlrpc_lib.Faults.BAD_NAME,
                              interface.addProcessGroup, 'asdf')
-        self.assertEqual(supervisord.process_groups.keys(), ['group1'])
+        self.assertEqual(list(supervisord.process_groups.keys()), ['group1'])
 
     def test_removeProcessGroup(self):
         from supervisor.supervisord import Supervisor
@@ -278,7 +278,7 @@ class SupervisorNamespaceXMLRPCInterfaceTests(TestBase):
         interface.addProcessGroup('group1')
         result = interface.removeProcessGroup('group1')
         self.assertTrue(result)
-        self.assertEqual(supervisord.process_groups.keys(), [])
+        self.assertEqual(list(supervisord.process_groups.keys()), [])
 
     def test_removeProcessGroup_bad_name(self):
         from supervisor.supervisord import Supervisor
@@ -1576,7 +1576,7 @@ class SupervisorNamespaceXMLRPCInterfaceTests(TestBase):
         supervisord = PopulatedDummySupervisor(options, 'process1', pconfig1)
         supervisord.set_procattr('process1', 'pid', 42)
         interface   = self._makeOne(supervisord)
-        interface.sendProcessStdin('process1', u'fi\xed')
+        interface.sendProcessStdin('process1', 'fi\xed')
         process1 = supervisord.process_groups['process1'].processes['process1']
         self.assertEqual(process1.stdin_buffer, 'fi\xc3\xad')
 
@@ -1615,7 +1615,7 @@ class SupervisorNamespaceXMLRPCInterfaceTests(TestBase):
         
         try:
             events.callbacks[:] = [(events.RemoteCommunicationEvent, callback)]
-            result = interface.sendRemoteCommEvent(u'fi\xed once', u'fi\xed twice')
+            result = interface.sendRemoteCommEvent('fi\xed once', 'fi\xed twice')
         finally:
             events.callbacks[:] = []
             events.clear()
@@ -1650,7 +1650,7 @@ class SystemNamespaceXMLRPCInterfaceTests(TestBase):
         interface = self._makeOne()
         methods = interface.listMethods()
         methods.sort()
-        keys = interface._listMethods().keys()
+        keys = list(interface._listMethods().keys())
         keys.sort()
         self.assertEqual(methods, keys)
 
@@ -1671,13 +1671,13 @@ class SystemNamespaceXMLRPCInterfaceTests(TestBase):
                      'base64', 'binary', 'array', 'struct']
         interface = self._makeOne()
         methods = interface._listMethods()
-        for k in methods.keys():
+        for k in list(methods.keys()):
             # if a method doesn't have a @return value, an RPCError is raised.
             # Detect that here.
             try:
                 interface.methodSignature(k)
             except xmlrpc_lib.RPCError:
-                raise AssertionError, ('methodSignature for %s raises '
+                raise AssertionError('methodSignature for %s raises '
                                        'RPCError (missing @return doc?)' % k)
 
             # we want to test that the number of arguments implemented in
@@ -1686,7 +1686,7 @@ class SystemNamespaceXMLRPCInterfaceTests(TestBase):
             ns_name, method_name = k.split('.', 1)
             namespace = interface.namespaces[ns_name]
             meth = getattr(namespace, method_name)
-            code = meth.func_code
+            code = meth.__code__
             argnames = code.co_varnames[1:code.co_argcount]
             parsed = xmlrpc_lib.gettags(str(meth.__doc__))
 
@@ -1719,7 +1719,7 @@ class SystemNamespaceXMLRPCInterfaceTests(TestBase):
             # param tokens
 
             if len(argnames) != len(pnames):
-                raise AssertionError, ('Incorrect documentation '
+                raise AssertionError('Incorrect documentation '
                                        '(%s args, %s doc params) in %s'
                                        % (len(argnames), len(pnames), k))
             for docline in plines:
@@ -1735,7 +1735,7 @@ class SystemNamespaceXMLRPCInterfaceTests(TestBase):
                                                                  argnames[x],
                                                                  k,
                                                                  parsed)
-                    raise AssertionError, msg
+                    raise AssertionError(msg)
             for doctext in ptexts:
                 self.failUnless(type(doctext) == type(''), doctext)
 

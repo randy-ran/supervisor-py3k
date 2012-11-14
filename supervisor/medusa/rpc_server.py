@@ -37,11 +37,12 @@ import string
 import sys
 import types
 
-import asyncore_25 as asyncore
-import asynchat_25 as asynchat
+from . import asyncore_25 as asyncore
+from . import asynchat_25 as asynchat
 
-from producers import scanning_producer
-from counter import counter
+from .producers import scanning_producer
+from .counter import counter
+from functools import reduce
 
 MY_NAME = string.split (socket.gethostname(), '.')[0]
 
@@ -125,7 +126,7 @@ class rpc_channel (asynchat.async_chat):
             try:
                 if kind == 0:
                     # __call__
-                    result = apply (obj, arg)
+                    result = obj(*arg)
                 elif kind == 1:
                     # __getattr__
                     result = getattr (obj, arg)
@@ -265,7 +266,7 @@ class fastrpc_channel (asynchat.async_chat):
             try:
                 for p in path:
                     o = getattr (o, p)
-                result = apply (o, params)
+                result = o(*params)
             except:
                 e = repr (asyncore.compact_traceback())
                 result = None
@@ -292,7 +293,7 @@ if __name__ == '__main__':
 
     class thing:
         def __del__ (self):
-            print 'a thing has gone away %08x' % id(self)
+            print(('a thing has gone away %08x' % id(self)))
 
     class sample_calc:
 

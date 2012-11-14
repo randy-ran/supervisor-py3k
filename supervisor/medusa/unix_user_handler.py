@@ -11,8 +11,8 @@ RCS_ID =  '$Id: unix_user_handler.py,v 1.4 2002/11/25 00:09:23 akuchling Exp $'
 
 import re
 import string
-import default_handler
-import filesys
+from . import default_handler
+from . import filesys
 import os
 import pwd
 
@@ -46,7 +46,7 @@ class unix_user_handler (default_handler.default_handler):
             return
 
         # have we already built a userdir fs for this user?
-        if self.fs_cache.has_key (user):
+        if user in self.fs_cache:
             fs = self.fs_cache[user]
         else:
             # no, well then, let's build one.

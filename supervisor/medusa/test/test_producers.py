@@ -4,7 +4,7 @@
 
 __revision__ = "$Id: test_producers.py,v 1.2 2002/09/18 20:16:40 akuchling Exp $"
 
-import StringIO, zlib
+import io, zlib
 from sancho.unittest import TestScenario, parse_args, run_scenarios
 
 tested_modules = ["supervisor.medusa.producers"]
@@ -63,7 +63,7 @@ class ProducerTest (TestScenario):
         self._check_all(p, 'a'*1027)
 
     def check_file (self):
-        f = StringIO.StringIO(test_string)
+        f = io.StringIO(test_string)
         p = producers.file_producer(f)
         self._check_all(p, test_string)
 

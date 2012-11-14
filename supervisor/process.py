@@ -3,7 +3,7 @@ import sys
 import time
 import errno
 import shlex
-import StringIO
+import io
 import traceback
 import signal
 
@@ -61,17 +61,17 @@ class Subprocess:
         self.state = ProcessStates.STOPPED
 
     def removelogs(self):
-        for dispatcher in self.dispatchers.values():
+        for dispatcher in list(self.dispatchers.values()):
             if hasattr(dispatcher, 'removelogs'):
                 dispatcher.removelogs()
 
     def reopenlogs(self):
-        for dispatcher in self.dispatchers.values():
+        for dispatcher in list(self.dispatchers.values()):
             if hasattr(dispatcher, 'reopenlogs'):
                 dispatcher.reopenlogs()
 
     def drain(self):
-        for dispatcher in self.dispatchers.values():
+        for dispatcher in list(self.dispatchers.values()):
             # note that we *must* call readable() for every
             # dispatcher, as it may have side effects for a given
             # dispatcher (eg. call handle_listener_state_change for
@@ -202,7 +202,7 @@ class Subprocess:
 
         try:
             filename, argv = self.get_execv_args()
-        except ProcessException, what:
+        except ProcessException as what:
             self.record_spawnerr(what.args[0])
             self._assertInState(ProcessStates.STARTING)
             self.change_state(ProcessStates.BACKOFF)
@@ -210,7 +210,7 @@ class Subprocess:
 
         try:
             self.dispatchers, self.pipes = self.config.make_dispatchers(self)
-        except OSError, why:
+        except OSError as why:
             code = why[0]
             if code == errno.EMFILE:
                 # too many file descriptors open
@@ -224,7 +224,7 @@ class Subprocess:
         
         try:
             pid = options.fork()
-        except OSError, why:
+        except OSError as why:
             code = why[0]
             if code == errno.EAGAIN:
                 # process table full
@@ -304,7 +304,7 @@ class Subprocess:
                 cwd = self.config.directory
                 if cwd is not None:
                     options.chdir(cwd)
-            except OSError, why:
+            except OSError as why:
                 code = errno.errorcode.get(why[0], why[0])
                 msg = "couldn't chdir to %s: %s\n" % (cwd, code)
                 options.write(2, msg)
@@ -313,7 +313,7 @@ class Subprocess:
                     if self.config.umask is not None:
                         options.setumask(self.config.umask)
                     options.execve(filename, argv, env)
-                except OSError, why:
+                except OSError as why:
                     code = errno.errorcode.get(why[0], why[0])
                     msg = "couldn't exec %s: %s\n" % (argv[0], code)
                     options.write(2, msg)
@@ -386,7 +386,7 @@ class Subprocess:
         try:
             options.kill(pid, sig)
         except:
-            io = StringIO.StringIO()
+            io = io.StringIO()
             traceback.print_exc(file=io)
             tb = io.getvalue()
             msg = 'unknown problem killing %s (%s):%s' % (self.config.name,
@@ -635,15 +635,15 @@ class ProcessGroupBase:
                                                  self.config.name)
 
     def removelogs(self):
-        for process in self.processes.values():
+        for process in list(self.processes.values()):
             process.removelogs()
 
     def reopenlogs(self):
-        for process in self.processes.values():
+        for process in list(self.processes.values()):
             process.reopenlogs()
 
     def stop_all(self):
-        processes = self.processes.values()
+        processes = list(self.processes.values())
         processes.sort()
         processes.reverse() # stop in desc priority order
 
@@ -661,18 +661,18 @@ class ProcessGroupBase:
 
     def get_unstopped_processes(self):
         """ Processes which aren't in a state that is considered 'stopped' """
-        return [ x for x in self.processes.values() if x.get_state() not in
+        return [ x for x in list(self.processes.values()) if x.get_state() not in
                  STOPPED_STATES ]
 
     def get_dispatchers(self):
         dispatchers = {}
-        for process in self.processes.values():
+        for process in list(self.processes.values()):
             dispatchers.update(process.dispatchers)
         return dispatchers
 
 class ProcessGroup(ProcessGroupBase):
     def transition(self):
-        for proc in self.processes.values():
+        for proc in list(self.processes.values()):
             proc.transition()
             
 class FastCGIProcessGroup(ProcessGroup):
@@ -686,7 +686,7 @@ class FastCGIProcessGroup(ProcessGroup):
         #to fail early during start up if there is a config error
         try:
             sock = self.socket_manager.get_socket()
-        except Exception, e:
+        except Exception as e:
             raise ValueError('Could not create FastCGI socket %s: %s' % (self.socket_manager.config(), e))
 
 class EventListenerPool(ProcessGroupBase):
@@ -702,13 +702,13 @@ class EventListenerPool(ProcessGroupBase):
 
     def handle_rejected(self, event):
         process = event.process
-        procs = self.processes.values()
+        procs = list(self.processes.values())
         if process in procs: # this is one of our processes
             # rebuffer the event
             self._acceptEvent(event.event, head=True)
 
     def transition(self):
-        processes = self.processes.values()
+        processes = list(self.processes.values())
         dispatch_capable = False
         for process in processes:
             process.transition()
@@ -743,7 +743,7 @@ class EventListenerPool(ProcessGroupBase):
             event.serial = new_serial(GlobalSerial)
         if not hasattr(event, 'pool_serials'):
             event.pool_serials = {}
-        if not event.pool_serials.has_key(self.config.name):
+        if self.config.name not in event.pool_serials:
             event.pool_serials[self.config.name] = new_serial(self)
         else:
             self.config.options.logger.debug(
@@ -765,7 +765,7 @@ class EventListenerPool(ProcessGroupBase):
     def _dispatchEvent(self, event):
         pool_serial = event.pool_serials[self.config.name]
             
-        for process in self.processes.values():
+        for process in list(self.processes.values()):
             if process.state != ProcessStates.RUNNING:
                 continue
             if process.listener_state == EventListenerStates.READY:
@@ -776,7 +776,7 @@ class EventListenerPool(ProcessGroupBase):
                     envelope = self._eventEnvelope(event_type, serial,
                                                    pool_serial, payload)
                     process.write(envelope)
-                except OSError, why:
+                except OSError as why:
                     if why[0] != errno.EPIPE:
                         raise
                     continue
@@ -814,7 +814,7 @@ class GlobalSerial:
 GlobalSerial = GlobalSerial() # singleton
 
 def new_serial(inst):
-    if inst.serial == sys.maxint:
+    if inst.serial == sys.maxsize:
         inst.serial = -1
     inst.serial += 1
     return inst.serial

@@ -12,9 +12,9 @@ import string
 VERSION = string.split(RCS_ID)[2]
 
 import socket
-import asyncore_25 as asyncore
-import asynchat_25 as asynchat
-import status_handler
+from . import asyncore_25 as asyncore
+from . import asynchat_25 as asynchat
+from . import status_handler
 
 class chat_channel (asynchat.async_chat):
 
@@ -55,7 +55,7 @@ class chat_channel (asynchat.async_chat):
             self.push ('[Kinda lonely in here... you\'re the only caller!]\r\n')
         else:
             self.push ('[There are %d other callers]\r\n' % (len(self.server.channels)-1))
-            nicks = map (lambda x: x.get_nick(), self.server.channels.keys())
+            nicks = [x.get_nick() for x in list(self.server.channels.keys())]
             self.push (string.join (nicks, '\r\n  ') + '\r\n')
             self.server.push_line (self, '[joined]')
 
@@ -108,7 +108,7 @@ class chat_server (asyncore.dispatcher):
         self.port = port
         self.create_socket (socket.AF_INET, socket.SOCK_STREAM)
         self.bind ((ip, port))
-        print '%s started on port %d' % (self.SERVER_IDENT, port)
+        print(('%s started on port %d' % (self.SERVER_IDENT, port)))
         self.listen (5)
         self.channels = {}
         self.count = 0
@@ -116,14 +116,14 @@ class chat_server (asyncore.dispatcher):
     def handle_accept (self):
         conn, addr = self.accept()
         self.count = self.count + 1
-        print 'client #%d - %s:%d' % (self.count, addr[0], addr[1])
+        print(('client #%d - %s:%d' % (self.count, addr[0], addr[1])))
         self.channels[self.channel_class (self, conn, addr)] = 1
 
     def push_line (self, from_channel, line):
         nick = from_channel.get_nick()
         if self.spy:
-            print '%s: %s' % (nick, line)
-        for c in self.channels.keys():
+            print(('%s: %s' % (nick, line)))
+        for c in list(self.channels.keys()):
             if c is not from_channel:
                 c.push ('%s: %s\r\n' % (nick, line))
 

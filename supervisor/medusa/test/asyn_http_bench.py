@@ -63,19 +63,19 @@ def loop (timeout=30.0):
 
 if __name__ == '__main__':
     if len(sys.argv) < 6:
-        print 'usage: %s <host> <port> <uri> <hits> <num_clients>' % sys.argv[0]
+        print(('usage: %s <host> <port> <uri> <hits> <num_clients>' % sys.argv[0]))
     else:
         [host, port, uri, hits, num] = sys.argv[1:]
         hits = string.atoi (hits)
         num = string.atoi (num)
         port = string.atoi (port)
         t = timer()
-        clients = map (lambda x: http_client (host, port, uri, hits-1), range(num))
+        clients = [http_client (host, port, uri, hits-1) for x in range(num)]
         #import profile
         #profile.run ('loop')
         loop()
         total_time = t.end()
-        print (
+        print((
                 '\n%d clients\n%d hits/client\n'
                 'total_hits:%d\n%.3f seconds\ntotal hits/sec:%.3f' % (
                         num,
@@ -84,8 +84,8 @@ if __name__ == '__main__':
                         total_time,
                         total_sessions / total_time
                         )
-                )
-        print 'Max. number of concurrent sessions: %d' % (MAX)
+                ))
+        print(('Max. number of concurrent sessions: %d' % (MAX)))
 
 
 # linux 2.x, talking to medusa

@@ -1,4 +1,4 @@
-import ConfigParser
+import configparser
 import socket
 import getopt
 import os
@@ -7,7 +7,7 @@ import tempfile
 import errno
 import signal
 import re
-import xmlrpclib
+import xmlrpc.client
 import pwd
 import grp
 import resource
@@ -116,7 +116,7 @@ class Options:
         help = self.doc
         if help.find("%s") > 0:
             help = help.replace("%s", self.progname)
-        print help,
+        print(help, end=' ')
         self.exit(0)
 
     def usage(self, msg):
@@ -159,43 +159,43 @@ class Options:
         """
         if flag is not None:
             if handler is not None:
-                raise ValueError, "use at most one of flag= and handler="
-            if not long and not short:
-                raise ValueError, "flag= requires a command line flag"
+                raise ValueError("use at most one of flag= and handler=")
+            if not int and not short:
+                raise ValueError("flag= requires a command line flag")
             if short and short.endswith(":"):
-                raise ValueError, "flag= requires a command line flag"
-            if long and long.endswith("="):
-                raise ValueError, "flag= requires a command line flag"
+                raise ValueError("flag= requires a command line flag")
+            if int and int.endswith("="):
+                raise ValueError("flag= requires a command line flag")
             handler = lambda arg, flag=flag: flag
 
-        if short and long:
-            if short.endswith(":") != long.endswith("="):
-                raise ValueError, "inconsistent short/long options: %r %r" % (
-                    short, long)
+        if short and int:
+            if short.endswith(":") != int.endswith("="):
+                raise ValueError("inconsistent short/long options: %r %r" % (
+                    short, int))
 
         if short:
             if short[0] == "-":
-                raise ValueError, "short option should not start with '-'"
+                raise ValueError("short option should not start with '-'")
             key, rest = short[:1], short[1:]
             if rest not in ("", ":"):
-                raise ValueError, "short option should be 'x' or 'x:'"
+                raise ValueError("short option should be 'x' or 'x:'")
             key = "-" + key
-            if self.options_map.has_key(key):
-                raise ValueError, "duplicate short option key '%s'" % key
+            if key in self.options_map:
+                raise ValueError("duplicate short option key '%s'" % key)
             self.options_map[key] = (name, handler)
             self.short_options.append(short)
 
-        if long:
-            if long[0] == "-":
-                raise ValueError, "long option should not start with '-'"
-            key = long
+        if int:
+            if int[0] == "-":
+                raise ValueError("long option should not start with '-'")
+            key = int
             if key[-1] == "=":
                 key = key[:-1]
             key = "--" + key
-            if self.options_map.has_key(key):
-                raise ValueError, "duplicate long option key '%s'" % key
+            if key in self.options_map:
+                raise ValueError("duplicate long option key '%s'" % key)
             self.options_map[key] = (name, handler)
-            self.long_options.append(long)
+            self.long_options.append(int)
 
         if env:
             self.environ_map[env] = (name, handler)
@@ -244,7 +244,7 @@ class Options:
         try:
             self.options, self.args = getopt.getopt(
                 args, "".join(self.short_options), self.long_options)
-        except getopt.error, msg:
+        except getopt.error as msg:
             if raise_getopt_errs:
                 self.usage(msg)
 
@@ -258,7 +258,7 @@ class Options:
             if handler is not None:
                 try:
                     arg = handler(arg)
-                except ValueError, msg:
+                except ValueError as msg:
                     self.usage("invalid value for %s %r: %s" % (opt, arg, msg))
             if name and arg is not None:
                 if getattr(self, name) is not None:
@@ -266,14 +266,14 @@ class Options:
                 self._set(name, arg, 2)
 
         # Process environment variables
-        for envvar in self.environ_map.keys():
+        for envvar in list(self.environ_map.keys()):
             name, handler = self.environ_map[envvar]
-            if os.environ.has_key(envvar):
+            if envvar in os.environ:
                 value = os.environ[envvar]
                 if handler is not None:
                     try:
                         value = handler(value)
-                    except ValueError, msg:
+                    except ValueError as msg:
                         self.usage("invalid environment value for %s %r: %s"
                                    % (envvar, value, msg))
                 if name and value is not None:
@@ -301,7 +301,7 @@ class Options:
             set_here(self.here)
         try:
             self.read_config(self.configfile)
-        except ValueError, msg:
+        except ValueError as msg:
             if do_usage:
                 # if this is not called from an RPC method, run usage and exit.
                 self.usage(str(msg))
@@ -323,12 +323,12 @@ class Options:
                 self._set(name, obj, 0)
 
         # Process defaults
-        for name, value in self.default_map.items():
+        for name, value in list(self.default_map.items()):
             if getattr(self, name) is None:
                 setattr(self, name, value)
 
         # Process required options
-        for name, message in self.required_map.items():
+        for name, message in list(self.required_map.items()):
             if getattr(self, name) is None:
                 self.usage(message)
 
@@ -513,7 +513,7 @@ class ServerOptions(Options):
         parser = UnhosedConfigParser()
         try:
             parser.readfp(fp)
-        except ConfigParser.ParsingError, why:
+        except configparser.ParsingError as why:
             raise ValueError(str(why))
 
         if parser.has_section('include'):
@@ -533,12 +533,12 @@ class ServerOptions(Options):
                         'Included extra file "%s" during parsing' % filename)
                     try:
                         parser.read(filename)
-                    except ConfigParser.ParsingError, why:
+                    except configparser.ParsingError as why:
                         raise ValueError(str(why))
 
         sections = parser.sections()
         if not 'supervisord' in sections:
-            raise ValueError, '.ini file does not include supervisord section'
+            raise ValueError('.ini file does not include supervisord section')
         get = parser.getdefault
         section.minfds = integer(get('minfds', 1024))
         section.minprocs = integer(get('minprocs', 200))
@@ -704,7 +704,7 @@ class ServerOptions(Options):
             try:
                 socket_config = self.parse_fcgi_socket(socket, proc_uid,
                                                     socket_owner, socket_mode)
-            except ValueError, e:
+            except ValueError as e:
                 raise ValueError('%s in [%s] socket' % (str(e), section))
 
             processes=self.processes_from_section(parser, section, program_name,
@@ -732,7 +732,7 @@ class ServerOptions(Options):
                     socket_owner = (proc_uid, self.get_gid_for_uid(proc_uid))
 
             if socket_mode is None:
-                socket_mode = 0700
+                socket_mode = 0o700
 
             return UnixStreamSocketConfig(path, owner=socket_owner,
                                                 mode=socket_mode)
@@ -792,7 +792,7 @@ class ServerOptions(Options):
 
         command = get(section, 'command', None)
         if command is None:
-            raise ValueError, (
+            raise ValueError(
                 'program section %s does not specify a command' % section)
 
         if numprocs > 1:
@@ -826,7 +826,7 @@ class ServerOptions(Options):
             for k in ('stdout', 'stderr'):
                 n = '%s_logfile' % k
                 lf_val = get(section, n, Automatic)
-                if isinstance(lf_val, basestring):
+                if isinstance(lf_val, str):
                     lf_val = expand(lf_val, expansions, n)
                 lf_val = logfile_name(lf_val)
                 logfiles[n] = lf_val
@@ -950,7 +950,7 @@ class ServerOptions(Options):
                 except (TypeError, ValueError):
                     raise ValueError('Invalid chmod value %s' % chmod)
             else:
-                chmod = 0700
+                chmod = 0o700
             config['chmod'] = chmod
             config['section'] = section
             configs.append(config)
@@ -989,7 +989,7 @@ class ServerOptions(Options):
         if self.directory:
             try:
                 os.chdir(self.directory)
-            except OSError, err:
+            except OSError as err:
                 self.logger.critical("can't chdir into %r: %s"
                                      % (self.directory, err))
             else:
@@ -1042,7 +1042,7 @@ class ServerOptions(Options):
             server.close()
             map = self.get_socket_map()
             # server._map is a reference to the asyncore socket_map
-            for dispatcher in map.values():
+            for dispatcher in list(map.values()):
                 # For unknown reasons, sometimes an http_channel
                 # dispatcher in the socket map related to servers
                 # remains open *during a reload*.  If one of these
@@ -1075,7 +1075,7 @@ class ServerOptions(Options):
     def openhttpservers(self, supervisord):
         try:
             self.httpservers = self.make_http_servers(supervisord)
-        except socket.error, why:
+        except socket.error as why:
             if why[0] == errno.EADDRINUSE:
                 self.usage('Another program is already listening on '
                            'a port that one of our HTTP servers is '
@@ -1090,7 +1090,7 @@ class ServerOptions(Options):
                     self.usage('%s errno.%s (%d)' %
                                (help, errorname, why[0]))
             self.unlink_socketfiles = False
-        except ValueError, why:
+        except ValueError as why:
             self.usage(why[0])
 
     def get_autochildlog_name(self, name, identifier, channel):
@@ -1195,7 +1195,7 @@ class ServerOptions(Options):
         # we're sitting in the waitpid call.
         try:
             pid, sts = os.waitpid(-1, os.WNOHANG)
-        except OSError, why:
+        except OSError as why:
             err = why[0]
             if err not in (errno.ECHILD, errno.EINTR):
                 self.logger.critical(
@@ -1336,7 +1336,7 @@ class ServerOptions(Options):
     def get_path(self):
         """Return a list corresponding to $PATH, or a default."""
         path = ["/bin", "/usr/bin", "/usr/local/bin"]
-        if os.environ.has_key("PATH"):
+        if "PATH" in os.environ:
             p = os.environ["PATH"]
             if p:
                 path = p.split(os.pathsep)
@@ -1352,7 +1352,7 @@ class ServerOptions(Options):
         elif stat.S_ISDIR(st[stat.ST_MODE]):
             raise NotExecutable("command at %r is a directory" % filename)
 
-        elif not (stat.S_IMODE(st[stat.ST_MODE]) & 0111):
+        elif not (stat.S_IMODE(st[stat.ST_MODE]) & 0o111):
             raise NotExecutable("command at %r is not executable" % filename)
 
         elif not os.access(filename, os.X_OK):
@@ -1367,7 +1367,7 @@ class ServerOptions(Options):
     def readfd(self, fd):
         try:
             data = os.read(fd, 2 << 16) # 128K
-        except OSError, why:
+        except OSError as why:
             if why[0] not in (errno.EWOULDBLOCK, errno.EBADF, errno.EINTR):
                 raise
             data = ''
@@ -1407,7 +1407,7 @@ class ServerOptions(Options):
                     fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | os.O_NDELAY)
             return pipes
         except OSError:
-            for fd in pipes.values():
+            for fd in list(pipes.values()):
                 if fd is not None:
                     self.close_fd(fd)
 
@@ -1472,7 +1472,7 @@ class ClientOptions(Options):
         config.readfp(fp)
         sections = config.sections()
         if not 'supervisorctl' in sections:
-            raise ValueError,'.ini file does not include supervisorctl section'
+            raise ValueError('.ini file does not include supervisorctl section')
         serverurl = config.getdefault('serverurl', 'http://localhost:9001')
         if serverurl.startswith('unix://'):
             sf = serverurl[7:]
@@ -1511,7 +1511,7 @@ class ClientOptions(Options):
 
     def getServerProxy(self):
         # mostly put here for unit testing
-        return xmlrpclib.ServerProxy(
+        return xmlrpc.client.ServerProxy(
             # dumbass ServerProxy won't allow us to pass in a non-HTTP url,
             # so we fake the url we pass into it and always use the transport's
             # 'serverurl' to figure out what to attach to
@@ -1523,17 +1523,17 @@ class ClientOptions(Options):
 
 _marker = []
 
-class UnhosedConfigParser(ConfigParser.RawConfigParser):
+class UnhosedConfigParser(configparser.RawConfigParser):
     mysection = 'supervisord'
     def read_string(self, s):
-        from StringIO import StringIO
+        from io import StringIO
         s = StringIO(s)
         return self.readfp(s)
 
     def getdefault(self, option, default=_marker):
         try:
             return self.get(self.mysection, option)
-        except ConfigParser.NoOptionError:
+        except configparser.NoOptionError:
             if default is _marker:
                 raise
             else:
@@ -1542,7 +1542,7 @@ class UnhosedConfigParser(ConfigParser.RawConfigParser):
     def saneget(self, section, option, default=_marker):
         try:
             return self.get(section, option)
-        except ConfigParser.NoOptionError:
+        except configparser.NoOptionError:
             if default is _marker:
                 raise
             else:
@@ -1881,7 +1881,7 @@ def signame(sig):
 def _init_signames():
     global _signames
     d = {}
-    for k, v in signal.__dict__.items():
+    for k, v in list(signal.__dict__.items()):
         k_startswith = getattr(k, "startswith", None)
         if k_startswith is None:
             continue
@@ -1932,7 +1932,7 @@ def environ_expansions():
         return _environ_expansions
 
     _environ_expansions = {}
-    for key, value in os.environ.iteritems():
+    for key, value in os.environ.items():
         _environ_expansions['ENV_%s' % key] = value
 
     return _environ_expansions

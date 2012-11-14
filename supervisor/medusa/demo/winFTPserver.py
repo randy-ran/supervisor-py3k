@@ -27,7 +27,7 @@ class Win32Authorizer:
                                                    passWord,
                                                     win32con.LOGON32_LOGON_INTERACTIVE,
                                                     win32con.LOGON32_PROVIDER_DEFAULT )
-        except pywintypes.error, ErrorMsg:
+        except pywintypes.error as ErrorMsg:
             return 0, ErrorMsg[ 2 ], None
 
         userInfo = win32net.NetUserGetInfo( None, userName, 1 )
@@ -47,5 +47,5 @@ def start_Server():
     asyncore.loop()
 
 if __name__ == "__main__":
-    print "Starting FTP Server"
+    print("Starting FTP Server")
     start_Server()

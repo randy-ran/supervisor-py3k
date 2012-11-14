@@ -3,7 +3,7 @@
 import sys
 import socket
 import base64
-from urlparse import urlparse
+from urllib.parse import urlparse
 
 from supervisor.medusa import asyncore_25 as aysncore
 from supervisor.medusa import asynchat_25 as asynchat
@@ -18,7 +18,7 @@ class Listener(object):
         pass
 
     def error(self, url, error):
-        print url, error
+        print((url, error))
     
     def response_header(self, url, name, value):
         pass
@@ -220,7 +220,7 @@ if __name__ == '__main__':
     handler = HTTPHandler(listener)
     try:
         handler.get(url)
-    except Exception, e:
+    except Exception as e:
         listener.error(url, "Error connecting '%s'" % e)
 
     asyncore.loop()

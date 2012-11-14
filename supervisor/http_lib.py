@@ -5,7 +5,7 @@ import sys
 import socket
 import errno
 import pwd
-import urllib
+import urllib.request, urllib.parse, urllib.error
 
 try:
     from hashlib import sha1
@@ -141,7 +141,7 @@ class deferring_http_request(http_server.http_request):
         # use string methods
         header = header.lower()
         hc = self._header_cache
-        if not hc.has_key(header):
+        if header not in hc:
             h = header + ': '
             for line in self.header:
                 if line.lower().startswith(h):
@@ -176,7 +176,7 @@ class deferring_http_request(http_server.http_request):
 
         if self.version == '1.0':
             if connection == 'keep-alive':
-                if not self.has_key ('Content-Length'):
+                if 'Content-Length' not in self:
                     close_it = 1
                 else:
                     self['Connection'] = 'Keep-Alive'
@@ -185,8 +185,8 @@ class deferring_http_request(http_server.http_request):
         elif self.version == '1.1':
             if connection == 'close':
                 close_it = 1
-            elif not self.has_key('Content-Length'):
-                if self.has_key('Transfer-Encoding'):
+            elif 'Content-Length' not in self:
+                if 'Transfer-Encoding' in self:
                     if not self['Transfer-Encoding'] == 'chunked':
                         close_it = 1
                 elif self.use_chunked:
@@ -302,11 +302,11 @@ class deferring_http_request(http_server.http_request):
             key,value=header.split(":",1)
             key=key.lower()
             value=value.strip()
-            if header2env.has_key(key) and value:
+            if key in header2env and value:
                 env[header2env.get(key)]=value
             else:
                 key='HTTP_%s' % ("_".join(key.split( "-"))).upper()
-                if value and not env.has_key(key):
+                if value and key not in env:
                     env[key]=value
         return env
 
@@ -323,9 +323,9 @@ class deferring_http_request(http_server.http_request):
         else:
             protocol = 'http'
 
-        if environ.has_key('HTTP_HOST'):
+        if 'HTTP_HOST' in environ:
             host = environ['HTTP_HOST'].strip()
-            hostname, port = urllib.splitport(host)
+            hostname, port = urllib.parse.splitport(host)
         else:
             hostname = environ['SERVER_NAME'].strip()
             port = environ['SERVER_PORT']
@@ -603,7 +603,7 @@ class supervisor_af_unix_http_server(supervisor_http_server):
                 else:
                     try:
                         os.chown(socketname, sockchown[0], sockchown[1])
-                    except OSError, why:
+                    except OSError as why:
                         if why[0] == errno.EPERM:
                             msg = ('Not permitted to chown %s to uid/gid %s; '
                                    'adjust "sockchown" value in config file or '
@@ -795,7 +795,7 @@ def make_http_servers(options, supervisord):
 
         from supervisor.xmlrpc_lib import supervisor_xmlrpc_handler
         from supervisor.xmlrpc_lib import SystemNamespaceRPCInterface
-        from web import supervisor_ui_handler
+        from .web import supervisor_ui_handler
 
         subinterfaces = []
         for name, factory, d in options.rpcinterface_factories:
@@ -851,7 +851,7 @@ class encrypted_dictionary_authorizer:
 
     def authorize(self, auth_info):
         username, password = auth_info
-        if self.dict.has_key(username):
+        if username in self.dict:
             stored_password = self.dict[username]
             if stored_password.startswith('{SHA}'):
                 password_hash = sha1(password).hexdigest()

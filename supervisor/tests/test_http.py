@@ -323,7 +323,7 @@ class TopLevelFunctionTests(unittest.TestCase):
         socketfile = tempfile.mktemp()
         inet = {'family':socket.AF_INET, 'host':'localhost', 'port':17735,
                 'username':None, 'password':None, 'section':'inet_http_server'}
-        unix = {'family':socket.AF_UNIX, 'file':socketfile, 'chmod':0700,
+        unix = {'family':socket.AF_UNIX, 'file':socketfile, 'chmod':0o700,
                 'chown':(-1, -1), 'username':None, 'password':None,
                 'section':'unix_http_server'}
         servers = self._make_http_servers([inet, unix])
@@ -351,7 +351,7 @@ class TopLevelFunctionTests(unittest.TestCase):
         inet = {'family':socket.AF_INET, 'host':'localhost', 'port':17736,
                 'username':'username', 'password':'password',
                 'section':'inet_http_server'}
-        unix = {'family':socket.AF_UNIX, 'file':socketfile, 'chmod':0700,
+        unix = {'family':socket.AF_UNIX, 'file':socketfile, 'chmod':0o700,
                 'chown':(-1, -1), 'username':'username', 'password':'password',
                 'section':'unix_http_server'}
         servers = self._make_http_servers([inet, unix])

@@ -14,10 +14,10 @@ import stat
 import string
 
 # medusa modules
-import http_date
-import http_server
-import status_handler
-import producers
+from . import http_date
+from . import http_server
+from . import status_handler
+from . import producers
 
 unquote = http_server.unquote
 
@@ -34,7 +34,7 @@ unquote = http_server.unquote
 # class <default_with_post_handler>, defined below.
 #
 
-from counter import counter
+from .counter import counter
 
 class default_handler:
 

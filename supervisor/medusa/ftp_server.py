@@ -19,8 +19,8 @@ RCS_ID =  '$Id: ftp_server.py,v 1.11 2003/12/24 16:05:28 akuchling Exp $'
 # vestigial anyway.  I've attempted to include the most commonly-used
 # commands, using the feature set of wu-ftpd as a guide.
 
-import asyncore_25 as asyncore
-import asynchat_25 as asynchat
+from . import asyncore_25 as asyncore
+from . import asynchat_25 as asynchat
 
 import os
 import socket
@@ -52,10 +52,10 @@ from supervisor.medusa.producers import file_producer
 
 VERSION = string.split(RCS_ID)[2]
 
-from counter import counter
-import producers
-import status_handler
-import logger
+from .counter import counter
+from . import producers
+from . import status_handler
+from . import logger
 
 class ftp_channel (asynchat.async_chat):
 
@@ -159,7 +159,7 @@ class ftp_channel (asynchat.async_chat):
             self.command_not_authorized (command)
         else:
             try:
-                result = apply (fun, (line,))
+                result = fun(*(line,))
             except:
                 self.server.total_exceptions.increment()
                 (file, fun, line), t,v, tbinfo = asyncore.compact_traceback()
@@ -202,7 +202,7 @@ class ftp_channel (asynchat.async_chat):
 
     # returns a producer
     def listdir (self, path, long=0):
-        return self.filesystem.listdir (path, long)
+        return self.filesystem.listdir (path, int)
 
     def get_dir_list (self, line, long=0):
         # we need to scan the command line for arguments to '/bin/ls'...
@@ -218,7 +218,7 @@ class ftp_channel (asynchat.async_chat):
             dir = '.'
         else:
             dir = path_args[0]
-        return self.listdir (dir, long)
+        return self.listdir (dir, int)
 
     # --------------------------------------------------
     # authorization methods
@@ -283,7 +283,7 @@ class ftp_channel (asynchat.async_chat):
                 cdc.bind (('', self.server.port - 1))
             try:
                 cdc.connect ((ip, port))
-            except socket.error, why:
+            except socket.error as why:
                 self.respond ("425 Can't build data connection")
         self.client_dc = cdc
 
@@ -310,7 +310,7 @@ class ftp_channel (asynchat.async_chat):
             cdc.create_socket (socket.AF_INET, socket.SOCK_STREAM)
             try:
                 cdc.connect ((ip, port))
-            except socket.error, why:
+            except socket.error as why:
                 self.respond ("425 Can't build data connection")
         self.client_dc = cdc
 
@@ -394,7 +394,7 @@ class ftp_channel (asynchat.async_chat):
             line.remove ('-FC')
         try:
             dir_list_producer = self.get_dir_list (line, 0)
-        except os.error, why:
+        except os.error as why:
             self.respond ('550 Could not list directory: %s' % why)
             return
         self.respond (
@@ -410,7 +410,7 @@ class ftp_channel (asynchat.async_chat):
         'give a list of files in a directory'
         try:
             dir_list_producer = self.get_dir_list (line, 1)
-        except os.error, why:
+        except os.error as why:
             self.respond ('550 Could not list directory: %s' % why)
             return
         self.respond (
@@ -493,7 +493,7 @@ class ftp_channel (asynchat.async_chat):
                     # FIXME: for some reason, 'rt' isn't working on win95
                     mode = 'r'+self.type_mode_map[self.current_mode]
                     fd = self.open (file, mode)
-                except IOError, why:
+                except IOError as why:
                     self.respond ('553 could not open file for reading: %s' % (repr(why)))
                     return
                 self.respond (
@@ -532,7 +532,7 @@ class ftp_channel (asynchat.async_chat):
             # todo: handle that type flag
             try:
                 fd = self.open (file, mode)
-            except IOError, why:
+            except IOError as why:
                 self.respond ('553 could not open file for writing: %s' % (repr(why)))
                 return
             self.respond (
@@ -959,7 +959,7 @@ class recv_channel (asyncore.dispatcher):
         return 0
 
     def recv (*args):
-        result = apply (asyncore.dispatcher.recv, args)
+        result = asyncore.dispatcher.recv(*args)
         self = args[0]
         self.bytes_in.increment(len(result))
         return result
@@ -982,7 +982,7 @@ class recv_channel (asyncore.dispatcher):
         self.channel.respond ('226 Transfer complete.')
         self.close()
 
-import filesys
+from . import filesys
 
 # not much of a doorman! 8^)
 class dummy_authorizer:
@@ -1151,4 +1151,4 @@ def get_vm_size ():
     return string.atoi (string.split(open ('/proc/self/stat').readline())[22])
 
 def print_vm():
-    print 'vm: %8dk' % (get_vm_size()/1024)
+    print(('vm: %8dk' % (get_vm_size()/1024)))

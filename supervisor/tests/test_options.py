@@ -21,7 +21,7 @@ from supervisor.tests.base import lstrip
 class OptionTests(unittest.TestCase):
 
     def _makeOptions(self, read_error=False):
-        from cStringIO import StringIO
+        from io import StringIO
         from supervisor.options import Options
         from supervisor.datatypes import integer
 
@@ -44,9 +44,9 @@ class OptionTests(unittest.TestCase):
         options = MyOptions()
         options.configfile = StringIO()
         options.add(name='anoption', confname='anoption',
-                    short='o', long='option', default='default')
+                    short='o', int='option', default='default')
         options.add(name='other', confname='other', env='OTHER',
-                    short='p:', long='other=', handler=integer)
+                    short='p:', int='other=', handler=integer)
         return options
 
     def test_options_and_args_order(self):
@@ -83,7 +83,7 @@ class OptionTests(unittest.TestCase):
 
     def test_config_reload_do_usage_true(self):
         options = self._makeOptions(read_error='error')
-        from StringIO import StringIO
+        from io import StringIO
         L = []
         def exit(num):
             L.append(num)
@@ -127,7 +127,7 @@ class ClientOptionsTests(unittest.TestCase):
         history_file=%s/sc_history
         """ % tempdir)
 
-        from StringIO import StringIO
+        from io import StringIO
         fp = StringIO(s)
         instance = self._makeOne()
         instance.configfile = fp
@@ -143,7 +143,7 @@ class ClientOptionsTests(unittest.TestCase):
         self.assertEqual(options.history_file, history_file)
 
     def test_options_unixsocket_cli(self):
-        from StringIO import StringIO
+        from io import StringIO
         fp = StringIO('[supervisorctl]')
         instance = self._makeOne()
         instance.configfile = fp
@@ -161,7 +161,7 @@ class ServerOptionsTests(unittest.TestCase):
     def test_version(self):
         from supervisor.options import VERSION
         options = self._makeOne()
-        from StringIO import StringIO
+        from io import StringIO
         options.stdout = StringIO()
         self.assertRaises(SystemExit, options.version, None)
         self.assertEqual(options.stdout.getvalue(), VERSION + '\n')
@@ -231,14 +231,14 @@ class ServerOptionsTests(unittest.TestCase):
 
         from supervisor import datatypes
 
-        from StringIO import StringIO
+        from io import StringIO
         fp = StringIO(s)
         instance = self._makeOne()
         instance.configfile = fp
         instance.realize(args=[])
         options = instance.configroot.supervisord
         self.assertEqual(options.directory, tempfile.gettempdir())
-        self.assertEqual(options.umask, 022)
+        self.assertEqual(options.umask, 0o22)
         self.assertEqual(options.logfile, 'supervisord.log')
         self.assertEqual(options.logfile_maxbytes, 1000 * 1024 * 1024)
         self.assertEqual(options.logfile_backups, 5)
@@ -284,7 +284,7 @@ class ServerOptionsTests(unittest.TestCase):
         self.assertEqual(proc1.stdout_logfile_backups, 10)
         self.assertEqual(proc1.exitcodes, [0,2])
         self.assertEqual(proc1.directory, '/tmp')
-        self.assertEqual(proc1.umask, 002)
+        self.assertEqual(proc1.umask, 0o02)
         self.assertEqual(proc1.environment, dict(FAKE_ENV_VAR='/some/path'))
 
         cat2 = options.process_group_configs[1]
@@ -372,7 +372,7 @@ class ServerOptionsTests(unittest.TestCase):
         self.assertEqual(instance.uid, 0)
         self.assertEqual(instance.gid, 0)
         self.assertEqual(instance.directory, tempfile.gettempdir())
-        self.assertEqual(instance.umask, 022)
+        self.assertEqual(instance.umask, 0o22)
         self.assertEqual(instance.logfile, os.path.join(here,'supervisord.log'))
         self.assertEqual(instance.logfile_maxbytes, 1000 * 1024 * 1024)
         self.assertEqual(instance.logfile_backups, 5)
@@ -395,7 +395,7 @@ class ServerOptionsTests(unittest.TestCase):
         self.assertEqual(instance.minprocs, 300)
 
     def test_reload(self):
-        from cStringIO import StringIO
+        from io import StringIO
         text = lstrip("""\
         [supervisord]
         user=root
@@ -468,7 +468,7 @@ class ServerOptionsTests(unittest.TestCase):
         old_warning = "Warning from a prior config read"
         instance.parse_warnings = [old_warning]
 
-        from cStringIO import StringIO
+        from io import StringIO
         text = lstrip("""\
         [supervisord]
         user=root
@@ -484,7 +484,7 @@ class ServerOptionsTests(unittest.TestCase):
         from supervisor.options import readFile
         try:
             readFile('/notthere', 0, 10)
-        except ValueError, inst:
+        except ValueError as inst:
             self.assertEqual(inst.args[0], 'FAILED')
         else:
             raise AssertionError("Didn't raise")
@@ -972,7 +972,7 @@ class ServerOptionsTests(unittest.TestCase):
         self.assertEqual(gconf_foo.socket_config.url,
                                 'unix:///tmp/foo.sock')
         self.assertEqual(exp_owner, gconf_foo.socket_config.get_owner())
-        self.assertEqual(0666, gconf_foo.socket_config.get_mode())
+        self.assertEqual(0o666, gconf_foo.socket_config.get_mode())
         self.assertEqual(len(gconf_foo.process_configs), 2)
         pconfig_foo = gconf_foo.process_configs[0]
         self.assertEqual(pconfig_foo.__class__, FastCGIProcessConfig)
@@ -983,7 +983,7 @@ class ServerOptionsTests(unittest.TestCase):
         self.assertEqual(gconf_bar.socket_config.url,
                          'unix:///tmp/bar.sock')
         self.assertEqual(exp_owner, gconf_bar.socket_config.get_owner())
-        self.assertEqual(0700, gconf_bar.socket_config.get_mode())
+        self.assertEqual(0o700, gconf_bar.socket_config.get_mode())
         self.assertEqual(len(gconf_bar.process_configs), 3)
 
         gconf_cub = gconfigs[2]
@@ -997,7 +997,7 @@ class ServerOptionsTests(unittest.TestCase):
         self.assertEqual(gconf_flub.socket_config.url,
                          'unix:///tmp/flub.sock')
         self.assertEqual(None, gconf_flub.socket_config.get_owner())
-        self.assertEqual(0700, gconf_flub.socket_config.get_mode())
+        self.assertEqual(0o700, gconf_flub.socket_config.get_mode())
         self.assertEqual(len(gconf_flub.process_configs), 1)
 
 

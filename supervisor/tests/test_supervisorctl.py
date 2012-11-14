@@ -1,6 +1,6 @@
 import sys
 import unittest
-from StringIO import StringIO
+from io import StringIO
 
 from supervisor.tests.base import DummyRPCServer
 
@@ -37,7 +37,7 @@ class ControllerTests(unittest.TestCase):
 
     def test__upcheck_unknown_method(self):
         options = DummyClientOptions()
-        from xmlrpclib import Fault
+        from xmlrpc.client import Fault
         from supervisor.xmlrpc_lib import Faults
         def getVersion():
             raise Fault(Faults.UNKNOWN_METHOD, 'duh')
@@ -540,10 +540,10 @@ class TestDefaultControllerPlugin(unittest.TestCase):
     def test_shutdown_catches_xmlrpc_fault_shutdown_state(self):
         plugin = self._makeOne()
         from supervisor import xmlrpc_lib
-        import xmlrpclib
+        import xmlrpc.client
         
         def raise_fault(*arg, **kw):     
-            raise xmlrpclib.Fault(xmlrpc_lib.Faults.SHUTDOWN_STATE, 'bye')
+            raise xmlrpc.client.Fault(xmlrpc_lib.Faults.SHUTDOWN_STATE, 'bye')
         plugin.ctl.options._server.supervisor.shutdown = raise_fault
 
         result = plugin.do_shutdown('')
@@ -554,13 +554,13 @@ class TestDefaultControllerPlugin(unittest.TestCase):
     def test_shutdown_reraises_other_xmlrpc_faults(self):
         plugin = self._makeOne()
         from supervisor import xmlrpc_lib
-        import xmlrpclib
+        import xmlrpc.client
         
         def raise_fault(*arg, **kw):     
-            raise xmlrpclib.Fault(xmlrpc_lib.Faults.CANT_REREAD, 'ouch')
+            raise xmlrpc.client.Fault(xmlrpc_lib.Faults.CANT_REREAD, 'ouch')
         plugin.ctl.options._server.supervisor.shutdown = raise_fault
 
-        self.assertRaises(xmlrpclib.Fault, 
+        self.assertRaises(xmlrpc.client.Fault, 
                           plugin.do_shutdown, '')
 
     def test_shutdown_catches_socket_error_ECONNREFUSED(self):
@@ -622,9 +622,9 @@ class TestDefaultControllerPlugin(unittest.TestCase):
     def test_reread_Fault(self):
         plugin = self._makeOne()
         from supervisor import xmlrpc_lib
-        import xmlrpclib
+        import xmlrpc.client
         def raise_fault(*arg, **kw):
-            raise xmlrpclib.Fault(xmlrpc_lib.Faults.CANT_REREAD, 'cant')
+            raise xmlrpc.client.Fault(xmlrpc_lib.Faults.CANT_REREAD, 'cant')
         plugin.ctl.options._server.supervisor.reloadConfig = raise_fault
         plugin.do_reread(None)
         self.assertEqual(plugin.ctl.stdout.getvalue(),
@@ -718,8 +718,8 @@ class TestDefaultControllerPlugin(unittest.TestCase):
         supervisor = plugin.ctl.options._server.supervisor
         def reloadConfig():
             from supervisor import xmlrpc_lib
-            import xmlrpclib
-            raise xmlrpclib.Fault(xmlrpc_lib.Faults.SHUTDOWN_STATE, 'blah')
+            import xmlrpc.client
+            raise xmlrpc.client.Fault(xmlrpc_lib.Faults.SHUTDOWN_STATE, 'blah')
         supervisor.reloadConfig = reloadConfig
         supervisor.processes = ['removed']
         plugin.do_update('')
@@ -739,7 +739,7 @@ class TestDefaultControllerPlugin(unittest.TestCase):
 
     def test_update_changed_procs(self):
         from supervisor import xmlrpc_lib
-        import xmlrpclib
+        import xmlrpc.client
 
         plugin = self._makeOne()
         supervisor = plugin.ctl.options._server.supervisor

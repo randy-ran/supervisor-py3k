@@ -18,7 +18,7 @@ import FCNTL
 import os
 import socket
 import string
-import thread
+import _thread
 
 # this channel slaves off of another one.  it starts a thread which
 # pumps its output through the 'write' side of the pipe.  The 'read'
@@ -51,7 +51,7 @@ class thread_channel (asyncore.file_dispatcher):
 
         of = os.fdopen (wfd, 'w')
 
-        thread.start_new_thread (
+        _thread.start_new_thread (
                 self.function,
                 # put the output file in front of the other arguments
                 (of,) + self.args
@@ -79,14 +79,14 @@ if __name__ == '__main__':
     import time
 
     def thread_function (output_file, i, n):
-        print 'entering thread_function'
+        print('entering thread_function')
         while n:
             time.sleep (5)
             output_file.write ('%2d.%2d %s\r\n' % (i, n, output_file))
             output_file.flush()
             n = n - 1
         output_file.close()
-        print 'exiting thread_function'
+        print('exiting thread_function')
 
     class thread_parent (asynchat.async_chat):
 

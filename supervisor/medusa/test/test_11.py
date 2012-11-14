@@ -31,7 +31,7 @@ class test_client (asynchat.async_chat):
             test_client.max_concurrent = test_client.concurrent
 
     def handle_expt (self):
-        print 'unexpected FD_EXPT thrown.  closing()'
+        print('unexpected FD_EXPT thrown.  closing()')
         self.close()
 
     def close (self):
@@ -71,15 +71,15 @@ if __name__ == '__main__':
     import string
     import sys
     if len(sys.argv) != 6:
-        print 'usage: %s <host> <port> <request-size> <num-requests> <num-connections>\n' % sys.argv[0]
+        print(('usage: %s <host> <port> <request-size> <num-requests> <num-connections>\n' % sys.argv[0]))
     else:
         host = sys.argv[1]
 
         ip = socket.gethostbyname (host)
 
-        [port, request_size, num_requests, num_conns] = map (
+        [port, request_size, num_requests, num_conns] = list(map (
                 string.atoi, sys.argv[2:]
-                )
+                ))
 
         chain = build_request_chain (num_requests, host, request_size)
 
@@ -104,7 +104,7 @@ if __name__ == '__main__':
 
         sys.stdout.write (
                 string.join (
-                        map (str, (num_conns, num_requests, request_size, throughput, trans_per_sec)),
+                        list(map (str, (num_conns, num_requests, request_size, throughput, trans_per_sec))),
                         ','
                         ) + '\n'
                 )

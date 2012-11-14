@@ -34,17 +34,17 @@ class timer:
 
 def test_cache (n=1000):
     t = timer()
-    for i in xrange (n):
+    for i in range (n):
         get(cache_request)
     end = t.end()
-    print 'cache: %d requests, %.2f seconds, %.2f hits/sec' % (n, end, n/end)
+    print(('cache: %d requests, %.2f seconds, %.2f hits/sec' % (n, end, n/end)))
 
 def test_nocache (n=1000):
     t = timer()
-    for i in xrange (n):
+    for i in range (n):
         get(nocache_request)
     end = t.end()
-    print 'nocache: %d requests, %.2f seconds, %.2f hits/sec' % (n, end, n/end)
+    print(('nocache: %d requests, %.2f seconds, %.2f hits/sec' % (n, end, n/end)))
 
 if __name__ == '__main__':
     test_cache()

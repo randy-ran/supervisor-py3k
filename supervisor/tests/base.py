@@ -552,14 +552,14 @@ def makeExecutable(file, substitutions=None):
     last = os.path.split(file)[1]
 
     substitutions['PYTHON'] = sys.executable
-    for key in substitutions.keys():
+    for key in list(substitutions.keys()):
         data = data.replace('<<%s>>' % key.upper(), substitutions[key])
     
     tmpnam = tempfile.mktemp(prefix=last)
     f = open(tmpnam, 'w')
     f.write(data)
     f.close()
-    os.chmod(tmpnam, 0755)
+    os.chmod(tmpnam, 0o755)
     return tmpnam
 
 def makeSpew(unkillable=False):
@@ -620,7 +620,7 @@ class DummyRequest:
         self.headers[header] = value
 
     def has_key(self, header):
-        return self.headers.has_key(header)
+        return header in self.headers
 
     def done(self):
         self._done = True
@@ -708,13 +708,13 @@ class DummySupervisorRPCNamespace:
 
     def readProcessStdoutLog(self, name, offset, length):
         from supervisor import xmlrpc_lib
-        import xmlrpclib
+        import xmlrpc.client
         if name == 'BAD_NAME':
-            raise xmlrpclib.Fault(xmlrpc_lib.Faults.BAD_NAME, 'BAD_NAME')
+            raise xmlrpc.client.Fault(xmlrpc_lib.Faults.BAD_NAME, 'BAD_NAME')
         elif name == 'FAILED':
-            raise xmlrpclib.Fault(xmlrpc_lib.Faults.FAILED, 'FAILED')
+            raise xmlrpc.client.Fault(xmlrpc_lib.Faults.FAILED, 'FAILED')
         elif name == 'NO_FILE':
-            raise xmlrpclib.Fault(xmlrpc_lib.Faults.NO_FILE, 'NO_FILE')
+            raise xmlrpc.client.Fault(xmlrpc_lib.Faults.NO_FILE, 'NO_FILE')
         a = 'output line\n' * 10
         return a[offset:]
 
@@ -726,22 +726,22 @@ class DummySupervisorRPCNamespace:
 
     def getProcessInfo(self, name):
         from supervisor import xmlrpc_lib
-        import xmlrpclib
+        import xmlrpc.client
         from supervisor.process import ProcessStates
         for i in self.all_process_info:
             if i['name']==name:
                 info=i
                 return info
         if name == 'BAD_NAME':
-            raise xmlrpclib.Fault(xmlrpc_lib.Faults.BAD_NAME, 'BAD_NAME')
+            raise xmlrpc.client.Fault(xmlrpc_lib.Faults.BAD_NAME, 'BAD_NAME')
         if name == 'FAILED':
-            raise xmlrpclib.Fault(xmlrpc_lib.Faults.FAILED, 'FAILED')
+            raise xmlrpc.client.Fault(xmlrpc_lib.Faults.FAILED, 'FAILED')
         if name == 'NO_FILE':
-            raise xmlrpclib.Fault(xmlrpc_lib.Faults.NO_FILE, 'NO_FILE')
+            raise xmlrpc.client.Fault(xmlrpc_lib.Faults.NO_FILE, 'NO_FILE')
 
     def startProcess(self, name):
         from supervisor import xmlrpc_lib
-        from xmlrpclib import Fault
+        from xmlrpc.client import Fault
         if name == 'BAD_NAME:BAD_NAME':
             raise Fault(xmlrpc_lib.Faults.BAD_NAME, 'BAD_NAME:BAD_NAME')
         if name == 'BAD_NAME':
@@ -794,7 +794,7 @@ class DummySupervisorRPCNamespace:
 
     def stopProcess(self, name):
         from supervisor import xmlrpc_lib
-        from xmlrpclib import Fault
+        from xmlrpc.client import Fault
         if name == 'BAD_NAME:BAD_NAME':
             raise Fault(xmlrpc_lib.Faults.BAD_NAME, 'BAD_NAME:BAD_NAME')
         if name == 'BAD_NAME':
@@ -823,7 +823,7 @@ class DummySupervisorRPCNamespace:
         if self._restartable:
             self._restarted = True
             return
-        from xmlrpclib import Fault
+        from xmlrpc.client import Fault
         from supervisor import xmlrpc_lib
         raise Fault(xmlrpc_lib.Faults.SHUTDOWN_STATE, '')
 
@@ -831,7 +831,7 @@ class DummySupervisorRPCNamespace:
         if self._restartable:
             self._shutdown = True
             return
-        from xmlrpclib import Fault
+        from xmlrpc.client import Fault
         from supervisor import xmlrpc_lib
         raise Fault(xmlrpc_lib.Faults.SHUTDOWN_STATE, '')
 
@@ -839,7 +839,7 @@ class DummySupervisorRPCNamespace:
         return [[['added'], ['changed'], ['removed']]]
 
     def addProcessGroup(self, name):
-        from xmlrpclib import Fault
+        from xmlrpc.client import Fault
         from supervisor import xmlrpc_lib
         if name == 'ALREADY_ADDED':
             raise Fault(xmlrpc_lib.Faults.ALREADY_ADDED, '')
@@ -851,7 +851,7 @@ class DummySupervisorRPCNamespace:
             self.processes = [name]
 
     def removeProcessGroup(self, name):
-        from xmlrpclib import Fault
+        from xmlrpc.client import Fault
         from supervisor import xmlrpc_lib
         if name == 'STILL_RUNNING':
             raise Fault(xmlrpc_lib.Faults.STILL_RUNNING, '')
@@ -860,7 +860,7 @@ class DummySupervisorRPCNamespace:
         self.processes.remove(name)
 
     def clearProcessStdoutLog(self, name):
-        from xmlrpclib import Fault
+        from xmlrpc.client import Fault
         from supervisor import xmlrpc_lib
         if name == 'BAD_NAME':
             raise Fault(xmlrpc_lib.Faults.BAD_NAME, 'BAD_NAME')
@@ -892,7 +892,7 @@ class DummySupervisorRPCNamespace:
 
     def readLog(self, whence, offset):
         if self._readlog_error:
-            from xmlrpclib import Fault
+            from xmlrpc.client import Fault
             raise Fault(self._readlog_error, '')
         return 'mainlogdata'
 

@@ -17,13 +17,13 @@ except ImportError:
 import re
 import string
 import time
-import counter
+from . import counter
 
-import default_handler
+from . import default_handler
 
 get_header = default_handler.get_header
 
-import producers
+from . import producers
 
 # This is a 'handler' that wraps an authorization method
 # around access to the resources normally served up by
@@ -54,7 +54,7 @@ class auth_handler:
                 try:
                     decoded = base64.decodestring (cookie)
                 except:
-                    print 'malformed authorization info <%s>' % cookie
+                    print(('malformed authorization info <%s>' % cookie))
                     request.error (400)
                     return
                 auth_info = string.split (decoded, ':')
@@ -67,7 +67,7 @@ class auth_handler:
             #elif scheme == 'digest':
             #       print 'digest: ',AUTHORIZATION.group(2)
             else:
-                print 'unknown/unsupported auth method: %s' % scheme
+                print(('unknown/unsupported auth method: %s' % scheme))
                 self.handle_unauthorized(request)
         else:
             # list both?  prefer one or the other?
@@ -91,7 +91,7 @@ class auth_handler:
     def make_nonce (self, request):
         "A digest-authentication <nonce>, constructed as suggested in RFC 2069"
         ip = request.channel.server.ip
-        now = str(long(time.time()))
+        now = str(int(time.time()))
         if now[-1:] == 'L':
             now = now[:-1]
         private_key = str (id (self))
@@ -127,7 +127,7 @@ class dictionary_authorizer:
 
     def authorize (self, auth_info):
         [username, password] = auth_info
-        if (self.dict.has_key (username)) and (self.dict[username] == password):
+        if (username in self.dict) and (self.dict[username] == password):
             return 1
         else:
             return 0

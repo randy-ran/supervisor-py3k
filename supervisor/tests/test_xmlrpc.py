@@ -7,13 +7,13 @@ from supervisor.tests.base import DummySupervisorRPCNamespace
 
 class XMLRPCMarshallingTests(unittest.TestCase):
     def test_xmlrpc_marshal(self):
-        import xmlrpclib
+        import xmlrpc.client
         from supervisor import xmlrpc_lib
         data = xmlrpc_lib.xmlrpc_marshal(1)
-        self.assertEqual(data, xmlrpclib.dumps((1,), methodresponse=True))
-        fault = xmlrpclib.Fault(1, 'foo')
+        self.assertEqual(data, xmlrpc.client.dumps((1,), methodresponse=True))
+        fault = xmlrpc.client.Fault(1, 'foo')
         data = xmlrpc_lib.xmlrpc_marshal(fault)
-        self.assertEqual(data, xmlrpclib.dumps(fault))
+        self.assertEqual(data, xmlrpc.client.dumps(fault))
 
 class XMLRPCHandlerTests(unittest.TestCase):
     def _getTargetClass(self):
@@ -45,8 +45,8 @@ class XMLRPCHandlerTests(unittest.TestCase):
         supervisor = DummySupervisor()
         subinterfaces = [('supervisor', DummySupervisorRPCNamespace())]
         handler = self._makeOne(supervisor, subinterfaces)
-        import xmlrpclib
-        data = xmlrpclib.dumps(('a', 'b'), 'supervisor.noSuchMethod')
+        import xmlrpc.client
+        data = xmlrpc.client.dumps(('a', 'b'), 'supervisor.noSuchMethod')
         request = DummyRequest('/what/ever', None, None, None)
         handler.continue_request(data, request)
         logdata = supervisor.options.logger.data
@@ -57,20 +57,20 @@ class XMLRPCHandlerTests(unittest.TestCase):
             expected = 3
         self.assertEqual(len(logdata), expected)
         self.assertEqual(logdata[-2],
-                         u'XML-RPC method called: supervisor.noSuchMethod()')
+                         'XML-RPC method called: supervisor.noSuchMethod()')
         self.assertEqual(logdata[-1],
-           (u'XML-RPC method supervisor.noSuchMethod() returned fault: '
+           ('XML-RPC method supervisor.noSuchMethod() returned fault: '
             '[1] UNKNOWN_METHOD'))
         self.assertEqual(len(request.producers), 1)
         xml_response = request.producers[0]
-        self.assertRaises(xmlrpclib.Fault, xmlrpclib.loads, xml_response)
+        self.assertRaises(xmlrpc.client.Fault, xmlrpc.client.loads, xml_response)
 
     def test_continue_request_methodsuccess(self):
         supervisor = DummySupervisor()
         subinterfaces = [('supervisor', DummySupervisorRPCNamespace())]
         handler = self._makeOne(supervisor, subinterfaces)
-        import xmlrpclib
-        data = xmlrpclib.dumps((), 'supervisor.getAPIVersion')
+        import xmlrpc.client
+        data = xmlrpc.client.dumps((), 'supervisor.getAPIVersion')
         request = DummyRequest('/what/ever', None, None, None)
         handler.continue_request(data, request)
         logdata = supervisor.options.logger.data
@@ -81,12 +81,12 @@ class XMLRPCHandlerTests(unittest.TestCase):
             expected = 3
         self.assertEqual(len(logdata), expected)
         self.assertEqual(logdata[-2],
-               u'XML-RPC method called: supervisor.getAPIVersion()')
+               'XML-RPC method called: supervisor.getAPIVersion()')
         self.assertEqual(logdata[-1],
-            u'XML-RPC method supervisor.getAPIVersion() returned successfully')
+            'XML-RPC method supervisor.getAPIVersion() returned successfully')
         self.assertEqual(len(request.producers), 1)
         xml_response = request.producers[0]
-        response = xmlrpclib.loads(xml_response)
+        response = xmlrpc.client.loads(xml_response)
         from supervisor.rpcinterface import API_VERSION
         self.assertEqual(response[0][0], API_VERSION)
         self.assertEqual(request._done, True)
@@ -111,13 +111,13 @@ class XMLRPCHandlerTests(unittest.TestCase):
             expected = 3
         self.assertEqual(len(logdata), expected)
         self.assertEqual(logdata[-2],
-               u'XML-RPC method called: supervisor.getAPIVersion()')
+               'XML-RPC method called: supervisor.getAPIVersion()')
         self.assertEqual(logdata[-1],
-            u'XML-RPC method supervisor.getAPIVersion() returned successfully')
+            'XML-RPC method supervisor.getAPIVersion() returned successfully')
         self.assertEqual(len(request.producers), 1)
         xml_response = request.producers[0]
-        import xmlrpclib
-        response = xmlrpclib.loads(xml_response)
+        import xmlrpc.client
+        response = xmlrpc.client.loads(xml_response)
         from supervisor.rpcinterface import API_VERSION
         self.assertEqual(response[0][0], API_VERSION)
         self.assertEqual(request._done, True)
@@ -140,7 +140,7 @@ class XMLRPCHandlerTests(unittest.TestCase):
             expected = 2
         self.assertEqual(len(logdata), expected)
         self.assertEqual(logdata[-1],
-               u'XML-RPC request received with no method name')
+               'XML-RPC request received with no method name')
         self.assertEqual(len(request.producers), 0)
         self.assertEqual(request._error, 400)
 
@@ -148,8 +148,8 @@ class XMLRPCHandlerTests(unittest.TestCase):
         supervisor = DummySupervisor()
         subinterfaces = [('supervisor', DummySupervisorRPCNamespace())]
         handler = self._makeOne(supervisor, subinterfaces)
-        import xmlrpclib
-        data = xmlrpclib.dumps((), 'supervisor.raiseError')
+        import xmlrpc.client
+        data = xmlrpc.client.dumps((), 'supervisor.raiseError')
         request = DummyRequest('/what/ever', None, None, None)
         handler.continue_request(data, request)
         logdata = supervisor.options.logger.data
@@ -160,7 +160,7 @@ class XMLRPCHandlerTests(unittest.TestCase):
             expected = 3
         self.assertEqual(len(logdata), expected)
         self.assertEqual(logdata[-2],
-               u'XML-RPC method called: supervisor.raiseError()')
+               'XML-RPC method called: supervisor.raiseError()')
         self.failUnless(logdata[-1].startswith('Traceback'))
         self.failUnless(logdata[-1].endswith('ValueError: error\n'))
         self.assertEqual(len(request.producers), 0)
@@ -207,41 +207,41 @@ class SupervisorTransportTests(unittest.TestCase):
         self.assertEqual(conn.socketfile, '/foo/bar')
 
     def test__get_connection_http_9001(self):
-        import httplib
+        import http.client
         transport = self._makeOne('user', 'pass', 'http://127.0.0.1:9001/')
         conn = transport._get_connection()
-        self.failUnless(isinstance(conn, httplib.HTTPConnection))
+        self.failUnless(isinstance(conn, http.client.HTTPConnection))
         self.assertEqual(conn.host, '127.0.0.1')
         self.assertEqual(conn.port, 9001)
 
     def test__get_connection_http_80(self):
-        import httplib
+        import http.client
         transport = self._makeOne('user', 'pass', 'http://127.0.0.1/')
         conn = transport._get_connection()
-        self.failUnless(isinstance(conn, httplib.HTTPConnection))
+        self.failUnless(isinstance(conn, http.client.HTTPConnection))
         self.assertEqual(conn.host, '127.0.0.1')
         self.assertEqual(conn.port, 80)
 
     def test_request_non_200_response(self):
-        import xmlrpclib
+        import xmlrpc.client
         transport = self._makeOne('user', 'pass', 'http://127.0.0.1/')
         dummy_conn = DummyConnection(400, '')
         def getconn():
             return dummy_conn
         transport._get_connection = getconn
-        self.assertRaises(xmlrpclib.ProtocolError,
+        self.assertRaises(xmlrpc.client.ProtocolError,
                           transport.request, 'localhost', '/', '')
         self.assertEqual(transport.connection, None)
         self.assertEqual(dummy_conn.closed, True)
 
     def test_request_400_response(self):
-        import xmlrpclib
+        import xmlrpc.client
         transport = self._makeOne('user', 'pass', 'http://127.0.0.1/')
         dummy_conn = DummyConnection(400, '')
         def getconn():
             return dummy_conn
         transport._get_connection = getconn
-        self.assertRaises(xmlrpclib.ProtocolError,
+        self.assertRaises(xmlrpc.client.ProtocolError,
                           transport.request, 'localhost', '/', '')
         self.assertEqual(transport.connection, None)
         self.assertEqual(dummy_conn.closed, True)

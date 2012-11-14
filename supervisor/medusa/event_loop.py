@@ -12,7 +12,7 @@
 # timeouts ("if the channel doesn't close in 5 minutes, then forcibly
 # close it" would be a typical usage).
 
-import asyncore_25 as asyncore
+from . import asyncore_25 as asyncore
 import bisect
 import time
 
@@ -67,18 +67,18 @@ class test (asyncore.dispatcher):
         asyncore.dispatcher.__init__ (self)
 
     def handle_connect (self):
-        print 'Connected!'
+        print('Connected!')
 
     def writable (self):
         return not self.connected
 
     def connect_timeout_callback (self, event_loop, when):
         if not self.connected:
-            print 'Timeout on connect'
+            print('Timeout on connect')
             self.close()
 
     def periodic_thing_callback (self, event_loop, when):
-        print 'A Periodic Event has Occurred!'
+        print('A Periodic Event has Occurred!')
         # re-schedule it.
         event_loop.schedule (self, 15, self.periodic_thing_callback)
 

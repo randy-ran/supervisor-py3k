@@ -181,7 +181,7 @@ class DatatypesTest(unittest.TestCase):
         from supervisor.datatypes import integer
         self.assertRaises(ValueError, integer, 'abc')
         self.assertEqual(integer('1'), 1)
-        self.assertEqual(integer(str(sys.maxint+1)), sys.maxint+1)
+        self.assertEqual(integer(str(sys.maxsize+1)), sys.maxsize+1)
 
     def test_url_accepts_urlparse_recognized_scheme_with_netloc(self):
         good_url = 'http://localhost:9001'

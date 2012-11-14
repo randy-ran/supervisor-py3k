@@ -35,7 +35,7 @@ class SubprocessTests(unittest.TestCase):
     def test_getProcessStateDescription(self):
         from supervisor.states import ProcessStates
         from supervisor.process import getProcessStateDescription
-        for statename, code in ProcessStates.__dict__.items():
+        for statename, code in list(ProcessStates.__dict__.items()):
             self.assertEqual(getProcessStateDescription(code), statename)
 
     def test_ctor(self):
@@ -353,7 +353,7 @@ class SubprocessTests(unittest.TestCase):
     def test_spawn_as_child_sets_umask(self):
         options = DummyOptions()
         options.forkpid = 0
-        config = DummyPConfig(options, 'good', '/good/filename', umask=002)
+        config = DummyPConfig(options, 'good', '/good/filename', umask=0o02)
         instance = self._makeOne(config)
         result = instance.spawn()
         self.assertEqual(result, None)
@@ -361,7 +361,7 @@ class SubprocessTests(unittest.TestCase):
         self.assertEqual(options.execv_args,
                          ('/good/filename', ['/good/filename']) )
         self.assertEqual(options._exitcode, 127)
-        self.assertEqual(options.umaskset, 002)
+        self.assertEqual(options.umaskset, 0o02)
 
     def test_spawn_as_child_cwd_fail(self):
         options = DummyOptions()
@@ -573,18 +573,18 @@ class SubprocessTests(unittest.TestCase):
                 try:
                     data = os.popen('ps').read()
                     break
-                except IOError, why:
+                except IOError as why:
                     if why[0] != errno.EINTR:
                         raise
                         # try again ;-)
             time.sleep(0.1) # arbitrary, race condition possible
-            self.failUnless(data.find(`origpid`) != -1 )
+            self.failUnless(data.find(repr(origpid)) != -1 )
             msg = instance.kill(signal.SIGTERM)
             time.sleep(0.1) # arbitrary, race condition possible
             self.assertEqual(msg, None)
             pid, sts = os.waitpid(-1, os.WNOHANG)
             data = os.popen('ps').read()
-            self.assertEqual(data.find(`origpid`), -1) # dubious
+            self.assertEqual(data.find(repr(origpid)), -1) # dubious
         finally:
             try:
                 os.remove(executable)
@@ -1068,7 +1068,7 @@ class SubprocessTests(unittest.TestCase):
         pconfig = DummyPConfig(options, 'process', 'process','/bin/process')
         process = self._makeOne(pconfig)
         process.laststart = 1
-        process.delay = sys.maxint
+        process.delay = sys.maxsize
         process.backoff = 0
         process.state = ProcessStates.BACKOFF
         process.transition()
@@ -1147,7 +1147,7 @@ class SubprocessTests(unittest.TestCase):
 
         pconfig = DummyPConfig(options, 'process', 'process','/bin/process')
         process = self._makeOne(pconfig)
-        process.delay = sys.maxint
+        process.delay = sys.maxsize
         process.state = ProcessStates.STOPPING
 
         process.transition()

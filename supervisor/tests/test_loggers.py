@@ -12,7 +12,7 @@ from supervisor.tests.base import DummyStream
 class LevelTests(unittest.TestCase):
     def test_LOG_LEVELS_BY_NUM_doesnt_include_builtins(self):
         from supervisor import loggers
-        for level_name in loggers.LOG_LEVELS_BY_NUM.values():
+        for level_name in list(loggers.LOG_LEVELS_BY_NUM.values()):
             self.assertFalse(level_name.startswith('_'))
 
 class HandlerTests:
@@ -106,7 +106,7 @@ class FileHandlerTests(HandlerTests, unittest.TestCase):
 
     def test_emit_unicode_noerror(self):
         handler = self._makeOne(self.filename)
-        record = self._makeLogRecord(u'fi\xed')
+        record = self._makeLogRecord('fi\xed')
         handler.emit(record)
         content = open(self.filename, 'r').read()
         self.assertEqual(content, 'fi\xc3\xad')
@@ -326,7 +326,7 @@ class LoggerTests(unittest.TestCase):
 class MockSysLog(mock.Mock):
     def __call__(self, *args, **kwargs):
         message = args[-1]
-        if sys.version_info < (3, 0) and isinstance(message, unicode):
+        if sys.version_info < (3, 0) and isinstance(message, str):
             # Python 2.x raises a UnicodeEncodeError when attempting to
             #  transmit unicode characters that don't encode in the
             #  default encoding.
@@ -356,12 +356,12 @@ class SyslogHandlerTests(HandlerTests, unittest.TestCase):
     @mock.patch('syslog.syslog', MockSysLog())
     def test_emit_unicode_noerror(self):
         handler = self._makeOne()
-        record = self._makeLogRecord(u'fi\xed')
+        record = self._makeLogRecord('fi\xed')
         handler.emit(record)
         if sys.version_info < (3, 0):
             syslog.syslog.assert_called_with('fi\xc3\xad')
         else:
-            syslog.syslog.assert_called_with(u'fi\xed')
+            syslog.syslog.assert_called_with('fi\xed')
 
 class DummyHandler:
     close = False

@@ -8,7 +8,7 @@
 RCS_ID =  '$Id: redirecting_handler.py,v 1.4 2002/03/20 17:37:48 amk Exp $'
 
 import re
-import counter
+from . import counter
 
 class redirecting_handler:
 
@@ -38,7 +38,7 @@ class redirecting_handler:
                 )
 
     def status (self):
-        import producers
+        from . import producers
         return producers.simple_producer (
                 '<li> Redirecting Handler %s => %s <b>Hits</b>: %s' % (
                         self.pattern, self.redirect, self.hits

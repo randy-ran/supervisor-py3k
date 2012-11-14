@@ -104,10 +104,10 @@ class Supervisor:
     def diff_to_active(self, new=None):
         if not new:
             new = self.options.process_group_configs
-        cur = [group.config for group in self.process_groups.values()]
+        cur = [group.config for group in list(self.process_groups.values())]
 
-        curdict = dict(zip([cfg.name for cfg in cur], cur))
-        newdict = dict(zip([cfg.name for cfg in new], new))
+        curdict = dict(list(zip([cfg.name for cfg in cur], cur)))
+        newdict = dict(list(zip([cfg.name for cfg in new], new)))
 
         added   = [cand for cand in new if cand.name not in curdict]
         removed = [cand for cand in cur if cand.name not in newdict]
@@ -133,7 +133,7 @@ class Supervisor:
 
     def get_process_map(self):
         process_map = {}
-        pgroups = self.process_groups.values()
+        pgroups = list(self.process_groups.values())
         for group in pgroups:
             process_map.update(group.get_dispatchers())
         return process_map
@@ -141,7 +141,7 @@ class Supervisor:
     def shutdown_report(self):
         unstopped = []
 
-        pgroups = self.process_groups.values()
+        pgroups = list(self.process_groups.values())
         for group in pgroups:
             unstopped.extend(group.get_unstopped_processes())
 
@@ -188,7 +188,7 @@ class Supervisor:
             combined_map.update(socket_map)
             combined_map.update(self.get_process_map())
 
-            pgroups = self.process_groups.values()
+            pgroups = list(self.process_groups.values())
             pgroups.sort()
 
             if self.options.mood < SupervisorStates.RUNNING:
@@ -208,7 +208,7 @@ class Supervisor:
 
             r, w, x = [], [], []
 
-            for fd, dispatcher in combined_map.items():
+            for fd, dispatcher in list(combined_map.items()):
                 if dispatcher.readable():
                     r.append(fd)
                 if dispatcher.writable():
@@ -216,7 +216,7 @@ class Supervisor:
 
             try:
                 r, w, x = self.options.select(r, w, x, timeout)
-            except select.error, err:
+            except select.error as err:
                 r = w = x = []
                 if err[0] == errno.EINTR:
                     self.options.logger.blather('EINTR encountered in select')
@@ -224,7 +224,7 @@ class Supervisor:
                     raise
 
             for fd in r:
-                if combined_map.has_key(fd):
+                if fd in combined_map:
                     try:
                         dispatcher = combined_map[fd]
                         self.options.logger.blather(
@@ -237,7 +237,7 @@ class Supervisor:
                         combined_map[fd].handle_error()
 
             for fd in w:
-                if combined_map.has_key(fd):
+                if fd in combined_map:
                     try:
                         dispatcher = combined_map[fd]
                         self.options.logger.blather(
@@ -308,7 +308,7 @@ class Supervisor:
                 self.options.logger.info(
                     'received %s indicating log reopen request' % signame(sig))
                 self.options.reopenlogs()
-                for group in self.process_groups.values():
+                for group in list(self.process_groups.values()):
                     group.reopenlogs()
             else:
                 self.options.logger.blather(

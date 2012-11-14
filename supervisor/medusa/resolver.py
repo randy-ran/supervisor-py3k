@@ -13,11 +13,12 @@ RCS_ID =  '$Id: resolver.py,v 1.4 2002/03/20 17:37:48 amk Exp $'
 # see rfc1035 for details
 
 import string
-import asyncore_25 as asyncore
+from . import asyncore_25 as asyncore
 import socket
 import sys
 import time
-from counter import counter
+from .counter import counter
+from functools import reduce
 
 VERSION = string.split(RCS_ID)[2]
 
@@ -58,10 +59,7 @@ def fast_address_request (host, id=0):
             '%c%c' % (chr((id>>8)&0xff),chr(id&0xff))
             + '\001\000\000\001\000\000\000\000\000\000%s\000\000\001\000\001' % (
                     string.join (
-                            map (
-                                    lambda part: '%c%s' % (chr(len(part)),part),
-                                    string.split (host, '.')
-                                    ), ''
+                            ['%c%s' % (chr(len(part)),part) for part in string.split (host, '.')], ''
                             )
                     )
             )
@@ -71,10 +69,7 @@ def fast_ptr_request (host, id=0):
             '%c%c' % (chr((id>>8)&0xff),chr(id&0xff))
             + '\001\000\000\001\000\000\000\000\000\000%s\000\000\014\000\001' % (
                     string.join (
-                            map (
-                                    lambda part: '%c%s' % (chr(len(part)),part),
-                                    string.split (host, '.')
-                                    ), ''
+                            ['%c%s' % (chr(len(part)),part) for part in string.split (host, '.')], ''
                             )
                     )
             )
@@ -111,7 +106,7 @@ def skip_name (r,pos):
 def unpack_ttl (r,pos):
     return reduce (
             lambda x,y: (x<<8)|y,
-            map (ord, r[pos:pos+4])
+            list(map (ord, r[pos:pos+4]))
             )
 
 # resource record
@@ -228,7 +223,7 @@ class resolver (asyncore.dispatcher):
         now = int(time.time())
         if now - self.last_reap_time > 180:        # reap every 3 minutes
             self.last_reap_time = now              # update before we forget
-            for k,(host,unpack,callback,when) in self.request_map.items():
+            for k,(host,unpack,callback,when) in list(self.request_map.items()):
                 if now - when > 180:               # over 3 minutes old
                     del self.request_map[k]
                     try:                           # same code as in handle_read
@@ -265,7 +260,7 @@ class resolver (asyncore.dispatcher):
         # for security reasons we may want to double-check
         # that <whence> is the server we sent the request to.
         id = (ord(reply[0])<<8) + ord(reply[1])
-        if self.request_map.has_key (id):
+        if id in self.request_map:
             host, unpack, callback, when = self.request_map[id]
             del self.request_map[id]
             ttl, answer = unpack (reply)
@@ -300,14 +295,14 @@ class hooked_callback:
         self.hook, self.callback = hook, callback
 
     def __call__ (self, *args):
-        apply (self.hook, args)
-        apply (self.callback, args)
+        self.hook(*args)
+        self.callback(*args)
 
 class caching_resolver (resolver):
     "Cache DNS queries.  Will need to honor the TTL value in the replies"
 
     def __init__ (*args):
-        apply (resolver.__init__, args)
+        resolver.__init__(*args)
         self = args[0]
         self.cache = {}
         self.forward_requests = counter()
@@ -316,7 +311,7 @@ class caching_resolver (resolver):
 
     def resolve (self, host, callback):
         self.forward_requests.increment()
-        if self.cache.has_key (host):
+        if host in self.cache:
             when, ttl, answer = self.cache[host]
             # ignore TTL for now
             callback (host, ttl, answer)
@@ -333,7 +328,7 @@ class caching_resolver (resolver):
 
     def resolve_ptr (self, host, callback):
         self.reverse_requests.increment()
-        if self.cache.has_key (host):
+        if host in self.cache:
             when, ttl, answer = self.cache[host]
             # ignore TTL for now
             callback (host, ttl, answer)
@@ -354,7 +349,7 @@ class caching_resolver (resolver):
     SERVER_IDENT = 'Caching DNS Resolver (V%s)' % VERSION
 
     def status (self):
-        import producers
+        from . import producers
         return producers.simple_producer (
                 '<h2>%s</h2>'                                   % self.SERVER_IDENT
                 + '<br>Server: %s'                              % self.server
@@ -390,7 +385,7 @@ class caching_resolver (resolver):
 
 if __name__ == '__main__':
     if len(sys.argv) == 1:
-        print 'usage: %s [-r] [-s <server_IP>] host [host ...]' % sys.argv[0]
+        print(('usage: %s [-r] [-s <server_IP>] host [host ...]' % sys.argv[0]))
         sys.exit(0)
     elif ('-s' in sys.argv):
         i = sys.argv.index('-s')
@@ -421,7 +416,7 @@ if __name__ == '__main__':
 
     def print_it (host, ttl, answer):
         global count
-        print '%s: %s' % (host, answer)
+        print(('%s: %s' % (host, answer)))
         count = count - 1
         if not count:
             r.close()
@@ -437,4 +432,4 @@ if __name__ == '__main__':
     # hooked asyncore.loop()
     while asyncore.socket_map:
         asyncore.poll (30.0)
-        print 'requests outstanding: %d' % len(r.request_map)
+        print(('requests outstanding: %d' % len(r.request_map)))

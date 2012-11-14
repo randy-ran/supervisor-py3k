@@ -134,14 +134,14 @@ class os_filesystem:
         # I think we should glob, but limit it to the current
         # directory only.
         ld = os.listdir (p)
-        if not long:
+        if not int:
             return list_producer (ld, None)
         else:
             old_dir = os.getcwd()
             try:
                 os.chdir (p)
                 # if os.stat fails we ignore that file.
-                result = filter (None, map (safe_stat, ld))
+                result = [_f for _f in map (safe_stat, ld) if _f]
             finally:
                 os.chdir (old_dir)
             return list_producer (result, self.longify)
@@ -190,7 +190,8 @@ class os_filesystem:
         p = self.normalize (self.path_module.join (self.root, p[1:]))
         return p
 
-    def longify (self, (path, stat_info)):
+    def longify (self, xxx_todo_changeme):
+        (path, stat_info) = xxx_todo_changeme
         return unix_longify (path, stat_info)
 
     def __repr__ (self):
@@ -251,7 +252,7 @@ if os.name == 'posix':
         def listdir (self, path, long=0):
             try:
                 self.become_persona()
-                return os_filesystem.listdir (self, path, long)
+                return os_filesystem.listdir (self, path, int)
             finally:
                 self.become_nobody()
 
@@ -260,7 +261,8 @@ if os.name == 'posix':
 # [yes, I think something like this "\\.\c\windows"]
 
 class msdos_filesystem (os_filesystem):
-    def longify (self, (path, stat_info)):
+    def longify (self, xxx_todo_changeme1):
+        (path, stat_info) = xxx_todo_changeme1
         return msdos_longify (path, stat_info)
 
 # A merged filesystem will let you plug other filesystems together.
@@ -331,12 +333,12 @@ import time
 def unix_longify (file, stat_info):
     # for now, only pay attention to the lower bits
     mode = ('%o' % stat_info[stat.ST_MODE])[-3:]
-    mode = string.join (map (lambda x: mode_table[x], mode), '')
+    mode = string.join ([mode_table[x] for x in mode], '')
     if stat.S_ISDIR (stat_info[stat.ST_MODE]):
         dirchar = 'd'
     else:
         dirchar = '-'
-    date = ls_date (long(time.time()), stat_info[stat.ST_MTIME])
+    date = ls_date (int(time.time()), stat_info[stat.ST_MTIME])
     return '%s%s %3d %-8d %-8d %8d %s %s' % (
             dirchar,
             mode,
@@ -392,7 +394,7 @@ class list_producer:
             # do a few at a time
             bunch = self.list[:50]
             if self.func is not None:
-                bunch = map (self.func, bunch)
+                bunch = list(map (self.func, bunch))
             self.list = self.list[50:]
             return string.joinfields (bunch, '\r\n') + '\r\n'
 

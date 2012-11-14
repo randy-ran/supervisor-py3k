@@ -2,7 +2,7 @@
 
 import re
 import string
-import StringIO
+import io
 import sys
 
 import os
@@ -53,7 +53,7 @@ header2env= {
         }
 
 # convert keys to lower case for case-insensitive matching
-for (key,value) in header2env.items():
+for (key,value) in list(header2env.items()):
     del header2env[key]
     key=string.lower(key)
     header2env[key]=value
@@ -87,7 +87,7 @@ class script_handler:
         if i != -1:
             uri = uri[:i]
 
-        if self.modules.has_key (uri):
+        if uri in self.modules:
             request.module = self.modules[uri]
             return 1
         else:
@@ -137,7 +137,7 @@ class script_handler:
             [key,value]=string.split(header,": ",1)
             key=string.lower(key)
 
-            if header2env.has_key(key):
+            if key in header2env:
                 if header2env[key]:
                     env[header2env[key]]=value
             else:
@@ -150,7 +150,7 @@ class script_handler:
                 env[key]=value
 
         ## remove empty environment variables
-        for key in env.keys():
+        for key in list(env.keys()):
             if env[key]=="" or env[key]==None:
                 del env[key]
 
@@ -167,7 +167,7 @@ class script_handler:
             request.collector = collector (self, request, env)
             request.channel.set_terminator (None)
         else:
-            sin = StringIO.StringIO ('')
+            sin = io.StringIO ('')
             self.continue_request (sin, request, env)
 
     def continue_request (self, stdin, request, env):
@@ -278,7 +278,7 @@ class collector:
         self.handler    = handler
         self.env = env
         self.request    = request
-        self.data = StringIO.StringIO()
+        self.data = io.StringIO()
 
         # make sure there's a content-length header
         self.cl = request.get_header ('content-length')
@@ -327,7 +327,7 @@ if __name__ == '__main__':
     import sys
 
     if len(sys.argv) < 2:
-        print 'Usage: %s <worker_threads>' % sys.argv[0]
+        print(('Usage: %s <worker_threads>' % sys.argv[0]))
     else:
         nthreads = string.atoi (sys.argv[1])
 

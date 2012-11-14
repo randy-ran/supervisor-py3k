@@ -198,7 +198,7 @@ class EventTypes:
     TICK_3600 = Tick3600Event
 
 def getEventNameByType(requested):
-    for name, typ in EventTypes.__dict__.items():
+    for name, typ in list(EventTypes.__dict__.items()):
         if typ is requested:
             return name
 

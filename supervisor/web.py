@@ -3,9 +3,9 @@ import re
 import cgi
 import time
 import traceback
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import datetime
-import StringIO
+import io
 
 from supervisor.medusa import producers
 from supervisor.medusa.http_server import http_date
@@ -50,7 +50,7 @@ class DeferredWebProducer:
             return self.sendresponse(response)
 
         except:
-            io = StringIO.StringIO()
+            io = io.StringIO()
             traceback.print_exc(file=io)
             # this should go to the main supervisor log file
             self.request.channel.server.logger.log('Web interface error',
@@ -64,7 +64,7 @@ class DeferredWebProducer:
         for header in headers:
             self.request[header] = headers[header]
 
-        if not self.request.has_key('Content-Type'):
+        if 'Content-Type' not in self.request:
             self.request['Content-Type'] = 'text/plain'
 
         if headers.get('Location'):
@@ -84,7 +84,7 @@ class DeferredWebProducer:
 
         if self.request.version == '1.0':
             if connection == 'keep-alive':
-                if not self.request.has_key('Content-Length'):
+                if 'Content-Length' not in self.request:
                     close_it = 1
                 else:
                     self.request['Connection'] = 'Keep-Alive'
@@ -93,8 +93,8 @@ class DeferredWebProducer:
         elif self.request.version == '1.1':
             if connection == 'close':
                 close_it = 1
-            elif not self.request.has_key ('Content-Length'):
-                if self.request.has_key ('Transfer-Encoding'):
+            elif 'Content-Length' not in self.request:
+                if 'Transfer-Encoding' in self.request:
                     if not self.request['Transfer-Encoding'] == 'chunked':
                         close_it = 1
                 elif self.request.use_chunked:
@@ -194,7 +194,7 @@ class TailView(MeldView):
                 rpcinterface = SupervisorNamespaceRPCInterface(supervisord)
                 try:
                     tail = rpcinterface.readProcessLog(processname, -1024, 0)
-                except RPCError, e:
+                except RPCError as e:
                     if e.code == Faults.NO_FILE:
                         tail = 'No file for %s' % processname
                     else:
@@ -210,7 +210,7 @@ class TailView(MeldView):
         refresh_anchor = root.findmeld('refresh_anchor')
         if processname is not None:
             refresh_anchor.attributes(href='tail.html?processname=%s' %
-                                      urllib.quote(processname))
+                                      urllib.parse.quote(processname))
         else:
             refresh_anchor.deparent()
 
@@ -219,7 +219,7 @@ class TailView(MeldView):
 class StatusView(MeldView):
     def actions_for_process(self, process):
         state = process.get_state()
-        processname = urllib.quote(make_namespec(process.group.config.name,
+        processname = urllib.parse.quote(make_namespec(process.group.config.name,
                                                  process.config.name))
         start = {
         'name':'Start',
@@ -347,7 +347,7 @@ class StatusView(MeldView):
                     try:
                         callback = rpcinterface.supervisor.startProcess(
                             namespec)
-                    except RPCError, e:
+                    except RPCError as e:
                         if e.code == Faults.SPAWN_ERROR:
                             def spawnerr():
                                 return 'Process %s spawn error' % namespec
@@ -388,7 +388,7 @@ class StatusView(MeldView):
                     return NOT_DONE_YET
                 if message is not None:
                     server_url = form['SERVER_URL']
-                    location = server_url + '?message=%s' % urllib.quote(
+                    location = server_url + '?message=%s' % urllib.parse.quote(
                         message)
                     response['headers']['Location'] = location
 
@@ -399,9 +399,9 @@ class StatusView(MeldView):
             )
 
         processnames = []
-        groups = supervisord.process_groups.values()
+        groups = list(supervisord.process_groups.values())
         for group in groups:
-            gprocnames = group.processes.keys()
+            gprocnames = list(group.processes.keys())
             for gprocname in gprocnames:
                 processnames.append((group.config.name, gprocname))
 
@@ -445,7 +445,7 @@ class StatusView(MeldView):
                 anchor = tr_element.findmeld('name_anchor')
                 processname = make_namespec(item['group'], item['name'])
                 anchor.attributes(href='tail.html?processname=%s' %
-                                  urllib.quote(processname))
+                                  urllib.parse.quote(processname))
                 anchor.content(processname)
 
                 actions = item['actions']
@@ -515,7 +515,7 @@ class supervisor_ui_handler:
         if not path:
             path = 'index.html'
             
-        for viewname in VIEWS.keys():
+        for viewname in list(VIEWS.keys()):
             if viewname == path:
                 return True
 
@@ -529,7 +529,7 @@ class supervisor_ui_handler:
         form = {}
         cgi_env = request.cgi_environment()
         form.update(cgi_env)
-        if not form.has_key('QUERY_STRING'):
+        if 'QUERY_STRING' not in form:
             form['QUERY_STRING'] = ''
 
         query = form['QUERY_STRING']
@@ -538,7 +538,7 @@ class supervisor_ui_handler:
         form_urlencoded = cgi.parse_qsl(data)
         query_data = cgi.parse_qs(query)
 
-        for k, v in query_data.items():
+        for k, v in list(query_data.items()):
             # ignore dupes
             form[k] = v[0]
 

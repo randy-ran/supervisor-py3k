@@ -12,8 +12,6 @@ from supervisor.medusa.http_server import http_date
 from supervisor.medusa.http_server import get_header
 from supervisor.medusa.xmlrpc_handler import collector
 
-import meld3
-
 from supervisor.process import ProcessStates
 from supervisor.http_lib import NOT_DONE_YET
 
@@ -152,6 +150,7 @@ class MeldView:
     delay = .5
 
     def __init__(self, context):
+        import meld3
         self.context = context
         template = self.context.template
         if not os.path.isabs(template):

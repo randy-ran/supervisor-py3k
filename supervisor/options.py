@@ -1366,6 +1366,7 @@ class ServerOptions(Options):
     def readfd(self, fd):
         try:
             data = os.read(fd, 2 << 16) # 128K
+            data = data.decode("latin-1") # sys.stdout.encodingcannot be used: this is the encoding of SV, does not mean that the started process outputs in the same encoding...
         except OSError as why:
             if why.errno not in (errno.EWOULDBLOCK, errno.EBADF, errno.EINTR):
                 raise

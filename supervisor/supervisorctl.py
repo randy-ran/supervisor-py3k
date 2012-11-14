@@ -178,8 +178,8 @@ class Controller(cmd.Cmd):
 
     def output(self, stuff):
         if stuff is not None:
-            if isinstance(stuff, str):
-                stuff = stuff.encode('utf-8')
+            if isinstance(stuff, bytes):
+                stuff = stuff.decode('utf-8')
             self.stdout.write(stuff + '\n')
     
     def get_supervisor(self):

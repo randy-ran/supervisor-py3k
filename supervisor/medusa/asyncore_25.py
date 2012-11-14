@@ -328,7 +328,7 @@ class dispatcher:
 
     def send(self, data):
         try:
-            result = self.socket.send(data)
+            result = self.socket.send(data.encode("UTF-8"))
             return result
         except socket.error as why:
             if why.errno == EWOULDBLOCK:
@@ -346,7 +346,7 @@ class dispatcher:
                 self.handle_close()
                 return ''
             else:
-                return data
+                return data.decode("UTF-8")
         except socket.error as why:
             # winsock sometimes throws ENOTCONN
             if why.errno in [ECONNRESET, ENOTCONN, ESHUTDOWN]:

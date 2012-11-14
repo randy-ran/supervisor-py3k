@@ -12,7 +12,6 @@ import re
 from cgi import escape
 
 import asyncore_25 as asyncore
-import http_server
 import medusa_gif
 import producers
 from counter import counter
@@ -125,6 +124,7 @@ class status_extension:
             request.push (message)
             now = int (time.time())
             for channel in asyncore.socket_map.keys():
+                import http_server
                 if channel.__class__ == http_server.http_channel:
                     if channel != request.channel:
                         if (now - channel.creation_time) > channel.zombie_timeout:

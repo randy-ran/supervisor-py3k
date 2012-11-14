@@ -854,7 +854,7 @@ class encrypted_dictionary_authorizer:
         if username in self.dict:
             stored_password = self.dict[username]
             if stored_password.startswith('{SHA}'):
-                password_hash = sha1(password).hexdigest()
+                password_hash = sha1(password.encode("ASCII")).hexdigest()
                 return stored_password[5:] == password_hash
             else:
                 return stored_password == password

@@ -52,9 +52,10 @@ class auth_handler:
             if scheme == 'basic':
                 cookie = get_header (AUTHORIZATION, request.header, 2)
                 try:
-                    decoded = base64.decodestring (cookie)
+                    decoded = base64.decodestring(cookie.encode("ascii"))
+                    decoded = decoded.decode("ascii")
                 except:
-                    print(('malformed authorization info <%s>' % cookie))
+                    print('malformed authorization info <%s>' % cookie)
                     request.error (400)
                     return
                 auth_info = string.split (decoded, ':')
@@ -67,7 +68,7 @@ class auth_handler:
             #elif scheme == 'digest':
             #       print 'digest: ',AUTHORIZATION.group(2)
             else:
-                print(('unknown/unsupported auth method: %s' % scheme))
+                print('unknown/unsupported auth method: %s' % scheme)
                 self.handle_unauthorized(request)
         else:
             # list both?  prefer one or the other?

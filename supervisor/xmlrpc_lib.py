@@ -452,7 +452,9 @@ class SupervisorTransport(xmlrpc.client.Transport):
             # basic auth
             if self.username is not None and self.password is not None:
                 unencoded = "%s:%s" % (self.username, self.password)
-                encoded = unencoded.encode('base64')
+                from base64 import encodebytes
+                encoded = urllib.parse.unquote_to_bytes(unencoded)
+                encoded = encodebytes(encoded).decode("utf-8")
                 encoded = encoded.replace('\012', '')
                 self.headers["Authorization"] = "Basic %s" % encoded
                 

@@ -1,6 +1,9 @@
 Next release
 ------------
 
+4.0a1 (2012-11-14)
+------------------
+First alpha release for py3k (not all features tested)
 
 3.0b1 (2012-09-10)
 ------------------

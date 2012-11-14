@@ -160,18 +160,18 @@ class Options:
         if flag is not None:
             if handler is not None:
                 raise ValueError("use at most one of flag= and handler=")
-            if not int and not short:
+            if not long and not short:
                 raise ValueError("flag= requires a command line flag")
             if short and short.endswith(":"):
                 raise ValueError("flag= requires a command line flag")
-            if int and int.endswith("="):
+            if long and long.endswith("="):
                 raise ValueError("flag= requires a command line flag")
             handler = lambda arg, flag=flag: flag
 
-        if short and int:
-            if short.endswith(":") != int.endswith("="):
+        if short and long:
+            if short.endswith(":") != long.endswith("="):
                 raise ValueError("inconsistent short/long options: %r %r" % (
-                    short, int))
+                    short, long))
 
         if short:
             if short[0] == "-":
@@ -185,17 +185,17 @@ class Options:
             self.options_map[key] = (name, handler)
             self.short_options.append(short)
 
-        if int:
-            if int[0] == "-":
+        if long:
+            if long[0] == "-":
                 raise ValueError("long option should not start with '-'")
-            key = int
+            key = long
             if key[-1] == "=":
                 key = key[:-1]
             key = "--" + key
             if key in self.options_map:
                 raise ValueError("duplicate long option key '%s'" % key)
             self.options_map[key] = (name, handler)
-            self.long_options.append(int)
+            self.long_options.append(long)
 
         if env:
             self.environ_map[env] = (name, handler)

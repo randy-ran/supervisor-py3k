@@ -85,6 +85,9 @@ class http_request:
     def has_key (self, key):
         return key in self.reply_headers
 
+    def __contains__(self, key):
+        return self.has_key(key)
+
     def build_reply_header (self):
         return string.join (
                 [self.response(self.reply_code)] + ['%s: %s' % x for x in list(self.reply_headers.items())],

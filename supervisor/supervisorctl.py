@@ -214,10 +214,10 @@ class Controller(cmd.Cmd):
                 return False
             raise 
         except socket.error as why:
-            if why[0] == errno.ECONNREFUSED:
+            if why.errno == errno.ECONNREFUSED:
                 self.output('%s refused connection' % self.options.serverurl)
                 return False
-            elif why[0] == errno.ENOENT:
+            elif why.errno == errno.ENOENT:
                 self.output('%s no such file' % self.options.serverurl)
                 return False
             raise
@@ -784,11 +784,11 @@ class DefaultControllerPlugin(ControllerPluginBase):
                     self.ctl.output('ERROR: already shutting down')
                 else:
                     raise
-            except socket.error as e:
-                if e[0] == errno.ECONNREFUSED:
+            except socket.error as why:
+                if why.errno == errno.ECONNREFUSED:
                     msg = 'ERROR: %s refused connection (already shut down?)'
                     self.ctl.output(msg % self.ctl.options.serverurl)
-                elif e[0] == errno.ENOENT:
+                elif why.errno == errno.ENOENT:
                     msg = 'ERROR: %s no such file (already shut down?)'
                     self.ctl.output(msg % self.ctl.options.serverurl)
                 else:

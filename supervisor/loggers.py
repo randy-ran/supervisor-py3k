@@ -64,7 +64,7 @@ class Handler(object):
             self.stream.flush()
         except IOError as why:
             # if supervisor output is piped, EPIPE can be raised at exit
-            if why[0] != errno.EPIPE:
+            if why.errno != errno.EPIPE:
                 raise
 
     def close(self):
@@ -106,7 +106,7 @@ class FileHandler(Handler):
         try:
             os.remove(self.baseFilename)
         except OSError as why:
-            if why[0] != errno.ENOENT:
+            if why.errno != errno.ENOENT:
                 raise
 
 class StreamHandler(Handler):
@@ -234,7 +234,7 @@ class RotatingFileHandler(FileHandler):
                             os.remove(dfn)
                         except OSError as why:
                             # catch race condition (already deleted)
-                            if why[0] != errno.ENOENT:
+                            if why.errno != errno.ENOENT:
                                 raise
                     os.rename(sfn, dfn)
             dfn = self.baseFilename + ".1"
@@ -243,7 +243,7 @@ class RotatingFileHandler(FileHandler):
                     os.remove(dfn)
                 except OSError as why:
                     # catch race condition (already deleted)
-                    if why[0] != errno.ENOENT:
+                    if why.errno != errno.ENOENT:
                         raise
             os.rename(self.baseFilename, dfn)
         self.stream = open(self.baseFilename, 'w')

@@ -1076,22 +1076,22 @@ class ServerOptions(Options):
         try:
             self.httpservers = self.make_http_servers(supervisord)
         except socket.error as why:
-            if why[0] == errno.EADDRINUSE:
+            if why.errno == errno.EADDRINUSE:
                 self.usage('Another program is already listening on '
                            'a port that one of our HTTP servers is '
                            'configured to use.  Shut this program '
                            'down first before starting supervisord.')
             else:
                 help = 'Cannot open an HTTP server: socket.error reported'
-                errorname = errno.errorcode.get(why[0])
+                errorname = errno.errorcode.get(why.errno)
                 if errorname is None:
-                    self.usage('%s %s' % (help, why[0]))
+                    self.usage('%s %s' % (help, why.errno))
                 else:
                     self.usage('%s errno.%s (%d)' %
-                               (help, errorname, why[0]))
+                               (help, errorname, why.errno))
             self.unlink_socketfiles = False
         except ValueError as why:
-            self.usage(why[0])
+            self.usage(why.errno)
 
     def get_autochildlog_name(self, name, identifier, channel):
         prefix='%s-%s---%s-' % (name, channel, identifier)
@@ -1196,11 +1196,10 @@ class ServerOptions(Options):
         try:
             pid, sts = os.waitpid(-1, os.WNOHANG)
         except OSError as why:
-            err = why[0]
-            if err not in (errno.ECHILD, errno.EINTR):
+            if why.errno not in (errno.ECHILD, errno.EINTR):
                 self.logger.critical(
                     'waitpid error; a process may not be cleaned up properly')
-            if err == errno.EINTR:
+            if why.errno == errno.EINTR:
                 self.logger.blather('EINTR during reap')
             pid, sts = None, None
         return pid, sts
@@ -1368,7 +1367,7 @@ class ServerOptions(Options):
         try:
             data = os.read(fd, 2 << 16) # 128K
         except OSError as why:
-            if why[0] not in (errno.EWOULDBLOCK, errno.EBADF, errno.EINTR):
+            if why.errno not in (errno.EWOULDBLOCK, errno.EBADF, errno.EINTR):
                 raise
             data = ''
         return data

@@ -574,7 +574,7 @@ class SubprocessTests(unittest.TestCase):
                     data = os.popen('ps').read()
                     break
                 except IOError as why:
-                    if why[0] != errno.EINTR:
+                    if why.errno != errno.EINTR:
                         raise
                         # try again ;-)
             time.sleep(0.1) # arbitrary, race condition possible

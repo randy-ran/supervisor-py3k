@@ -211,12 +211,11 @@ class Subprocess:
         try:
             self.dispatchers, self.pipes = self.config.make_dispatchers(self)
         except OSError as why:
-            code = why[0]
-            if code == errno.EMFILE:
+            if why.errno == errno.EMFILE:
                 # too many file descriptors open
                 msg = 'too many open files to spawn %r' % self.config.name
             else:
-                msg = 'unknown error: %s' % errno.errorcode.get(code, code)
+                msg = 'unknown error: %s' % errno.errorcode.get(why.errno, why.errno)
             self.record_spawnerr(msg)
             self._assertInState(ProcessStates.STARTING)
             self.change_state(ProcessStates.BACKOFF)
@@ -225,13 +224,12 @@ class Subprocess:
         try:
             pid = options.fork()
         except OSError as why:
-            code = why[0]
-            if code == errno.EAGAIN:
+            if why.errno == errno.EAGAIN:
                 # process table full
                 msg  = ('Too many processes in process table to spawn %r' %
                         self.config.name)
             else:
-                msg = 'unknown error: %s' % errno.errorcode.get(code, code)
+                msg = 'unknown error: %s' % errno.errorcode.get(why.errno, why.errno)
 
             self.record_spawnerr(msg)
             self._assertInState(ProcessStates.STARTING)
@@ -305,7 +303,7 @@ class Subprocess:
                 if cwd is not None:
                     options.chdir(cwd)
             except OSError as why:
-                code = errno.errorcode.get(why[0], why[0])
+                code = errno.errorcode.get(why.errno, why.errno)
                 msg = "couldn't chdir to %s: %s\n" % (cwd, code)
                 options.write(2, msg)
             else:
@@ -314,7 +312,7 @@ class Subprocess:
                         options.setumask(self.config.umask)
                     options.execve(filename, argv, env)
                 except OSError as why:
-                    code = errno.errorcode.get(why[0], why[0])
+                    code = errno.errorcode.get(why.errno, why.errno)
                     msg = "couldn't exec %s: %s\n" % (argv[0], code)
                     options.write(2, msg)
                 except:
@@ -777,7 +775,7 @@ class EventListenerPool(ProcessGroupBase):
                                                    pool_serial, payload)
                     process.write(envelope)
                 except OSError as why:
-                    if why[0] != errno.EPIPE:
+                    if why.errno != errno.EPIPE:
                         raise
                     continue
                 

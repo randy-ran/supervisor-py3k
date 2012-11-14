@@ -740,7 +740,7 @@ class SupervisorNamespaceRPCInterface:
         try:
             process.write(chars)
         except OSError as why:
-            if why[0] == errno.EPIPE:
+            if why.errno == errno.EPIPE:
                 raise RPCError(Faults.NO_FILE, name)
             else:
                 raise

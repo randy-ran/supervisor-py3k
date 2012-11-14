@@ -16,7 +16,7 @@ from supervisor.tests.base import DummyPConfig
 from supervisor.tests.base import DummyOptions
 from supervisor.tests.base import DummyRequest
 
-from supervisor.http import NOT_DONE_YET
+from supervisor.http_lib import NOT_DONE_YET
 
 class HandlerTests:
     def _makeOne(self, supervisord):
@@ -32,7 +32,7 @@ class HandlerTests:
 
 class LogtailHandlerTests(HandlerTests, unittest.TestCase):
     def _getTargetClass(self):
-        from supervisor.http import logtail_handler
+        from supervisor.http_lib import logtail_handler
         return logtail_handler
 
     def test_handle_request_stdout_logfile_none(self):
@@ -78,7 +78,7 @@ class LogtailHandlerTests(HandlerTests, unittest.TestCase):
 
 class MainLogTailHandlerTests(HandlerTests, unittest.TestCase):
     def _getTargetClass(self):
-        from supervisor.http import mainlogtail_handler
+        from supervisor.http_lib import mainlogtail_handler
         return mainlogtail_handler
 
     def test_handle_request_stdout_logfile_none(self):
@@ -118,7 +118,7 @@ class MainLogTailHandlerTests(HandlerTests, unittest.TestCase):
 
 class TailFProducerTests(unittest.TestCase):
     def _getTargetClass(self):
-        from supervisor.http import tail_f_producer
+        from supervisor.http_lib import tail_f_producer
         return tail_f_producer
 
     def _makeOne(self, request, filename, head):
@@ -127,7 +127,7 @@ class TailFProducerTests(unittest.TestCase):
     def test_handle_more(self):
         request = DummyRequest('/logtail/foo', None, None, None)
         import tempfile
-        from supervisor import http
+        from supervisor import http_lib
         f = tempfile.NamedTemporaryFile()
         f.write('a' * 80)
         f.flush()
@@ -140,7 +140,7 @@ class TailFProducerTests(unittest.TestCase):
         result = producer.more()
         self.assertEqual(result, 'w' * 100)
         result = producer.more()
-        self.assertEqual(result, http.NOT_DONE_YET)
+        self.assertEqual(result, http_lib.NOT_DONE_YET)
         f.truncate(0)
         f.flush()
         result = producer.more()
@@ -148,7 +148,7 @@ class TailFProducerTests(unittest.TestCase):
 
 class DeferringChunkedProducerTests(unittest.TestCase):
     def _getTargetClass(self):
-        from supervisor.http import deferring_chunked_producer
+        from supervisor.http_lib import deferring_chunked_producer
         return deferring_chunked_producer
 
     def _makeOne(self, producer, footers=None):
@@ -171,7 +171,7 @@ class DeferringChunkedProducerTests(unittest.TestCase):
 
 class DeferringCompositeProducerTests(unittest.TestCase):
     def _getTargetClass(self):
-        from supervisor.http import deferring_composite_producer
+        from supervisor.http_lib import deferring_composite_producer
         return deferring_composite_producer
 
     def _makeOne(self, producers):
@@ -197,7 +197,7 @@ class DeferringCompositeProducerTests(unittest.TestCase):
 
 class DeferringGlobbingProducerTests(unittest.TestCase):
     def _getTargetClass(self):
-        from supervisor.http import deferring_globbing_producer
+        from supervisor.http_lib import deferring_globbing_producer
         return deferring_globbing_producer
 
     def _makeOne(self, producer, buffer_size=1<<16):
@@ -224,7 +224,7 @@ class DeferringGlobbingProducerTests(unittest.TestCase):
 
 class DeferringHookedProducerTests(unittest.TestCase):
     def _getTargetClass(self):
-        from supervisor.http import deferring_hooked_producer
+        from supervisor.http_lib import deferring_hooked_producer
         return deferring_hooked_producer
 
     def _makeOne(self, producer, function):
@@ -257,7 +257,7 @@ class DeferringHookedProducerTests(unittest.TestCase):
 
 class EncryptedDictionaryAuthorizedTests(unittest.TestCase):
     def _getTargetClass(self):
-        from supervisor.http import encrypted_dictionary_authorizer
+        from supervisor.http_lib import encrypted_dictionary_authorizer
         return encrypted_dictionary_authorizer
 
     def _makeOne(self, dict):
@@ -287,7 +287,7 @@ class EncryptedDictionaryAuthorizedTests(unittest.TestCase):
 
 class SupervisorAuthHandlerTests(unittest.TestCase):
     def _getTargetClass(self):
-        from supervisor.http import supervisor_auth_handler
+        from supervisor.http_lib import supervisor_auth_handler
         return supervisor_auth_handler
 
     def _makeOne(self, dict, handler):
@@ -295,7 +295,7 @@ class SupervisorAuthHandlerTests(unittest.TestCase):
 
     def test_ctor(self):
         handler = self._makeOne({'a':1}, None)
-        from supervisor.http import encrypted_dictionary_authorizer
+        from supervisor.http_lib import encrypted_dictionary_authorizer
         self.assertEqual(handler.authorizer.__class__,
                          encrypted_dictionary_authorizer)
     
@@ -306,7 +306,7 @@ class TopLevelFunctionTests(unittest.TestCase):
         options.server_configs = sconfigs
         options.rpcinterface_factories = [('dummy',DummyRPCInterfaceFactory,{})]
         supervisord = DummySupervisor()
-        from supervisor.http import make_http_servers
+        from supervisor.http_lib import make_http_servers
         servers = make_http_servers(options, supervisord)
         try:
             for config, s in servers:
@@ -356,7 +356,7 @@ class TopLevelFunctionTests(unittest.TestCase):
                 'section':'unix_http_server'}
         servers = self._make_http_servers([inet, unix])
         self.assertEqual(len(servers), 2)
-        from supervisor.http import supervisor_auth_handler
+        from supervisor.http_lib import supervisor_auth_handler
         for config, server in servers:
             for handler in server.handlers:
                 self.failUnless(isinstance(handler, supervisor_auth_handler),

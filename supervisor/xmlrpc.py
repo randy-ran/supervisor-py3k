@@ -12,7 +12,7 @@ from supervisor.medusa.http_server import get_header
 from supervisor.medusa.xmlrpc_handler import xmlrpc_handler
 from supervisor.medusa import producers
 
-from supervisor.http import NOT_DONE_YET
+from supervisor.http_lib import NOT_DONE_YET
 
 class Faults:
     UNKNOWN_METHOD = 1

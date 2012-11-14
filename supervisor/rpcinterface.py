@@ -15,7 +15,7 @@ from supervisor.options import VERSION
 from supervisor.events import notify
 from supervisor.events import RemoteCommunicationEvent
 
-from supervisor.http import NOT_DONE_YET
+from supervisor.http_lib import NOT_DONE_YET
 from supervisor.xmlrpc import Faults
 from supervisor.xmlrpc import RPCError
 

@@ -377,7 +377,7 @@ class SupervisorNamespaceXMLRPCInterfaceTests(TestBase):
         self._assertRPCError(xmlrpc.Faults.SPAWN_ERROR, callback)
 
     def test_startProcess(self):
-        from supervisor import http
+        from supervisor import http_lib
         options = DummyOptions()
         pconfig = DummyPConfig(options, 'foo', __file__, autostart=False,
                                startsecs=.01)
@@ -386,7 +386,7 @@ class SupervisorNamespaceXMLRPCInterfaceTests(TestBase):
         supervisord.set_procattr('foo', 'state', ProcessStates.STOPPED)
         interface = self._makeOne(supervisord)
         callback = interface.startProcess('foo')
-        self.assertEqual(callback(), http.NOT_DONE_YET)
+        self.assertEqual(callback(), http_lib.NOT_DONE_YET)
         process = supervisord.process_groups['foo'].processes['foo']
         self.assertEqual(process.spawned, True)
         self.assertEqual(interface.update_text, 'startProcess')
@@ -432,8 +432,8 @@ class SupervisorNamespaceXMLRPCInterfaceTests(TestBase):
         interface = self._makeOne(supervisord)
         callback = interface.startProcess('foo', 100) # milliseconds
         result = callback()
-        from supervisor import http
-        self.assertEqual(result, http.NOT_DONE_YET)
+        from supervisor import http_lib
+        self.assertEqual(result, http_lib.NOT_DONE_YET)
         process = supervisord.process_groups['foo'].processes['foo']
         self.assertEqual(process.spawned, True)
         self.assertEqual(interface.update_text, 'startProcess')
@@ -454,8 +454,8 @@ class SupervisorNamespaceXMLRPCInterfaceTests(TestBase):
         interface = self._makeOne(supervisord)
         callback = interface.startProcess('foo', 100) # milliseconds
         result = callback()
-        from supervisor import http
-        self.assertEqual(result, http.NOT_DONE_YET)
+        from supervisor import http_lib
+        self.assertEqual(result, http_lib.NOT_DONE_YET)
         supervisord.set_procattr('foo', 'state', ProcessStates.STARTING)
         process = supervisord.process_groups['foo'].processes['foo']
         self.assertEqual(process.spawned, True)
@@ -496,7 +496,7 @@ class SupervisorNamespaceXMLRPCInterfaceTests(TestBase):
         interface = self._makeOne(supervisord)
         callback = interface.startProcessGroup('foo')
 
-        from supervisor.http import NOT_DONE_YET
+        from supervisor.http_lib import NOT_DONE_YET
 
         # create callbacks in startall()
         self.assertEqual(callback(), NOT_DONE_YET)
@@ -549,7 +549,7 @@ class SupervisorNamespaceXMLRPCInterfaceTests(TestBase):
         supervisord.set_procattr('process2', 'state', ProcessStates.STOPPED)
         interface = self._makeOne(supervisord)
         callback = interface.startProcessGroup('foo', wait=False)
-        from supervisor.http import NOT_DONE_YET
+        from supervisor.http_lib import NOT_DONE_YET
         from supervisor.xmlrpc import Faults
 
         # create callbacks in startall()
@@ -591,7 +591,7 @@ class SupervisorNamespaceXMLRPCInterfaceTests(TestBase):
         interface = self._makeOne(supervisord)
         callback = interface.startAllProcesses()
 
-        from supervisor.http import NOT_DONE_YET
+        from supervisor.http_lib import NOT_DONE_YET
 
         # create callbacks in startall()
         self.assertEqual(callback(), NOT_DONE_YET)
@@ -644,7 +644,7 @@ class SupervisorNamespaceXMLRPCInterfaceTests(TestBase):
         supervisord.set_procattr('process2', 'state', ProcessStates.STOPPED)
         interface = self._makeOne(supervisord)
         callback = interface.startAllProcesses(wait=False)
-        from supervisor.http import NOT_DONE_YET
+        from supervisor.http_lib import NOT_DONE_YET
         from supervisor.xmlrpc import Faults
 
         # create callbacks in startall()
@@ -684,8 +684,8 @@ class SupervisorNamespaceXMLRPCInterfaceTests(TestBase):
         self.assertEqual(process.backoff, 0)
         self.assertEqual(process.delay, 0)
         self.assertEqual(process.killing, 0)
-        from supervisor import http
-        self.assertEqual(callback(), http.NOT_DONE_YET)
+        from supervisor import http_lib
+        self.assertEqual(callback(), http_lib.NOT_DONE_YET)
         from supervisor.process import ProcessStates
         self.assertEqual(process.state, ProcessStates.STOPPED)
         self.assertEqual(callback(), True)
@@ -717,11 +717,11 @@ class SupervisorNamespaceXMLRPCInterfaceTests(TestBase):
         interface = self._makeOne(supervisord)
         callback = interface.stopProcessGroup('foo')
         self.assertEqual(interface.update_text, 'stopProcessGroup')
-        from supervisor import http
-        value = http.NOT_DONE_YET
+        from supervisor import http_lib
+        value = http_lib.NOT_DONE_YET
         while 1:
             value = callback()
-            if value is not http.NOT_DONE_YET:
+            if value is not http_lib.NOT_DONE_YET:
                 break
 
         self.assertEqual(value, [
@@ -744,7 +744,7 @@ class SupervisorNamespaceXMLRPCInterfaceTests(TestBase):
         supervisord.set_procattr('process2', 'state', ProcessStates.RUNNING)
         interface = self._makeOne(supervisord)
         callback = interface.stopProcessGroup('foo', wait=False)
-        from supervisor.http import NOT_DONE_YET
+        from supervisor.http_lib import NOT_DONE_YET
         from supervisor.xmlrpc import Faults
 
         # create callbacks in killall()
@@ -798,11 +798,11 @@ class SupervisorNamespaceXMLRPCInterfaceTests(TestBase):
         interface = self._makeOne(supervisord)
         callback = interface.stopAllProcesses()
         self.assertEqual(interface.update_text, 'stopAllProcesses')
-        from supervisor import http
-        value = http.NOT_DONE_YET
+        from supervisor import http_lib
+        value = http_lib.NOT_DONE_YET
         while 1:
             value = callback()
-            if value is not http.NOT_DONE_YET:
+            if value is not http_lib.NOT_DONE_YET:
                 break
 
         self.assertEqual(value, [
@@ -825,7 +825,7 @@ class SupervisorNamespaceXMLRPCInterfaceTests(TestBase):
         supervisord.set_procattr('process2', 'state', ProcessStates.RUNNING)
         interface = self._makeOne(supervisord)
         callback = interface.stopAllProcesses(wait=False)
-        from supervisor.http import NOT_DONE_YET
+        from supervisor.http_lib import NOT_DONE_YET
         from supervisor.xmlrpc import Faults
 
         # create callbacks in killall()
@@ -1763,9 +1763,9 @@ class SystemNamespaceXMLRPCInterfaceTests(TestBase):
             {'methodName':'system.methodHelp', 'params':['system.methodHelp']},
             {'methodName':'system.listMethods', 'params':[]},
             ])
-        from supervisor import http
-        result = http.NOT_DONE_YET
-        while result is http.NOT_DONE_YET:
+        from supervisor import http_lib
+        result = http_lib.NOT_DONE_YET
+        while result is http_lib.NOT_DONE_YET:
             result = callback()
         self.assertEqual(result[0], interface.methodHelp('system.methodHelp'))
         self.assertEqual(result[1], interface.listMethods())
@@ -1777,9 +1777,9 @@ class SystemNamespaceXMLRPCInterfaceTests(TestBase):
             {'methodName': 'system.multicall', 'params': []},        
         ])
 
-        from supervisor import http
-        result = http.NOT_DONE_YET
-        while result is http.NOT_DONE_YET:
+        from supervisor import http_lib
+        result = http_lib.NOT_DONE_YET
+        while result is http_lib.NOT_DONE_YET:
             result = callback()
         
         code = xmlrpc.Faults.INCORRECT_PARAMETERS
@@ -1792,9 +1792,9 @@ class SystemNamespaceXMLRPCInterfaceTests(TestBase):
         interface = self._makeOne()
         callback = interface.multicall([
             {'methodName':'supervisor.stopAllProcesses'}])
-        from supervisor import http
-        result = http.NOT_DONE_YET
-        while result is http.NOT_DONE_YET:
+        from supervisor import http_lib
+        result = http_lib.NOT_DONE_YET
+        while result is http_lib.NOT_DONE_YET:
             result = callback()
         self.assertEqual(result[0], [])
 

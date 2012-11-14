@@ -1278,7 +1278,7 @@ class ServerOptions(Options):
             self.logger.info(msg)
 
     def make_http_servers(self, supervisord):
-        from supervisor.http import make_http_servers
+        from supervisor.http_lib import make_http_servers
         return make_http_servers(self, supervisord)
 
     def close_fd(self, fd):

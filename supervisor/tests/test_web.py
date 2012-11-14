@@ -25,7 +25,7 @@ class DeferredWebProducerTests(unittest.TestCase):
 
     def test_more_not_done_yet(self):
         request = DummyRequest('/index.html', [], '', '')
-        from supervisor.http import NOT_DONE_YET
+        from supervisor.http_lib import NOT_DONE_YET
         callback = lambda *x: NOT_DONE_YET
         callback.delay = 1
         producer = self._makeOne(request, callback)
@@ -163,7 +163,7 @@ class StatusViewTests(unittest.TestCase):
         context.form = {'action':'refresh'}
         view = self._makeOne(context)
         data = view.render()
-        from supervisor.http import NOT_DONE_YET
+        from supervisor.http_lib import NOT_DONE_YET
         self.assertTrue(data is NOT_DONE_YET, data)
 
 class DummyContext:

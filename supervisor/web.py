@@ -15,7 +15,7 @@ from supervisor.medusa.xmlrpc_handler import collector
 import meld3
 
 from supervisor.process import ProcessStates
-from supervisor.http import NOT_DONE_YET
+from supervisor.http_lib import NOT_DONE_YET
 
 from supervisor.options import make_namespec
 from supervisor.options import split_namespec

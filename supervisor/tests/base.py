@@ -430,8 +430,8 @@ class DummyProcess:
     def drain(self):
         self.drained = True
 
-    def __cmp__(self, other):
-        return cmp(self.config.priority, other.config.priority)
+    def __lt__(self, other):
+        return self.config.priority < other.config.priority
 
     def readable_fds(self):
         return []

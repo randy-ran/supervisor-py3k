@@ -482,9 +482,9 @@ class Subprocess:
         msg = self.config.options.dropPrivileges(self.config.uid)
         return msg
 
-    def __cmp__(self, other):
-        # sort by priority
-        return cmp(self.config.priority, other.config.priority)
+    def __lt__(self, other):
+        # compare by priority
+        return self.config.priority < other.config.priority
 
     def __repr__(self):
         return '<Subprocess at %s with name %s in state %s>' % (
@@ -623,10 +623,9 @@ class ProcessGroupBase:
         self.processes = {}
         for pconfig in self.config.process_configs:
             self.processes[pconfig.name] = pconfig.make_process(self)
-        
 
-    def __cmp__(self, other):
-        return cmp(self.config.priority, other.config.priority)
+    def __lt__(self, other):
+        return self.config.priority < other.config.priority
 
     def __repr__(self):
         return '<%s instance at %s named %s>' % (self.__class__, id(self),

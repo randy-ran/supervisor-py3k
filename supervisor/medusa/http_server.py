@@ -245,7 +245,7 @@ class http_request:
         if self.collector:
             self.collector.collect_incoming_data (data)
         else:
-            self.log_info(
+            self.channel.server.log_info(
                     'Dropping %d bytes of incoming request data' % len(data),
                     'warning'
                     )
@@ -254,7 +254,7 @@ class http_request:
         if self.collector:
             self.collector.found_terminator()
         else:
-            self.log_info (
+            self.channel.server.log_info (
                     'Unexpected end-of-record for incoming request',
                     'warning'
                     )
@@ -591,7 +591,7 @@ class http_channel (asynchat.async_chat):
             self.server.total_requests.increment()
 
             if command is None:
-                self.log_info ('Bad HTTP request: %s' % repr(request), 'error')
+                self.server.log_info ('Bad HTTP request: %s' % repr(request), 'error')
                 r.error (400)
                 return
 
@@ -608,7 +608,7 @@ class http_channel (asynchat.async_chat):
                     except:
                         self.server.exceptions.increment()
                         (file, fun, line), t, v, tbinfo = asyncore.compact_traceback()
-                        self.log_info(
+                        self.server.log_info(
                                         'Server Error: %s, %s: file: %s line: %s' % (t,v,file,line),
                                         'error')
                         try:

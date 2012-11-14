@@ -12,7 +12,6 @@ import pwd
 import grp
 import resource
 import stat
-import pkg_resources
 import select
 import glob
 import platform
@@ -356,7 +355,15 @@ class Options:
         return factories
 
     def import_spec(self, spec):
-        return pkg_resources.EntryPoint.parse("x="+spec).load(False)
+        import importlib
+        moduleName, methodName = spec.split(":")
+        mod = importlib.import_module(moduleName)
+        if not mod:
+            raise Exception("No module '%s' found" % (moduleName))
+        meth = getattr(mod, methodName)
+        if not meth:
+            raise Exception("No method '%s' found in module '%s'" % (methodName, moduleName))
+        return meth
 
 
 class ServerOptions(Options):

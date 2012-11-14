@@ -1525,6 +1525,9 @@ _marker = []
 
 class UnhosedConfigParser(configparser.RawConfigParser):
     mysection = 'supervisord'
+    def __init__(self):
+        configparser.RawConfigParser.__init__(self, inline_comment_prefixes=('#', ';'))
+    
     def read_string(self, s):
         from io import StringIO
         s = StringIO(s)
